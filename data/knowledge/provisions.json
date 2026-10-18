@@ -1,0 +1,1149 @@
+{
+  "meta": {
+    "description": "Curated index of statutory provisions from Indian central statutes, with section headings and short extracts taken from the official gazette text published on India Code / Department of Consumer Affairs.",
+    "scope": "Small, deliberately accurate dataset. Not a comprehensive legal database.",
+    "lastReviewed": "2026-10-18",
+    "verificationNote": "Section numbers and headings were checked against the official arrangement of sections of each Act (India Code, indiacode.nic.in). Extracts are short quotations or close paraphrases of the statutory text. Always read the full provision before relying on it.",
+    "asOfNote": "Bharatiya Nyaya Sanhita 2023, Bharatiya Nagarik Suraksha Sanhita 2023 and Bharatiya Sakshya Adhiniyam 2023 came into force on 1 July 2024 and repealed the Indian Penal Code 1860, Code of Criminal Procedure 1973 and the Indian Evidence Act 1872 respectively. Events before 1 July 2024 are ordinarily governed by the repealed law. Provision records carry a `inForceFrom` field so the workspace can flag this."
+  },
+  "acts": {
+    "BNS": {
+      "shortTitle": "Bharatiya Nyaya Sanhita, 2023",
+      "actNo": "Act No. 45 of 2023",
+      "kind": "penal",
+      "repealed": "Indian Penal Code, 1860",
+      "inForceFrom": "2024-07-01",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/20062",
+      "sourceLabel": "India Code — The Bharatiya Nyaya Sanhita, 2023"
+    },
+    "BNSS": {
+      "shortTitle": "Bharatiya Nagarik Suraksha Sanhita, 2023",
+      "actNo": "Act No. 46 of 2023",
+      "kind": "procedure",
+      "repealed": "Code of Criminal Procedure, 1973",
+      "inForceFrom": "2024-07-01",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/20099",
+      "sourceLabel": "India Code — The Bharatiya Nagarik Suraksha Sanhita, 2023"
+    },
+    "DVA": {
+      "shortTitle": "Protection of Women from Domestic Violence Act, 2005",
+      "actNo": "Act No. 43 of 2005",
+      "kind": "special",
+      "inForceFrom": "2006-10-26",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/2021",
+      "sourceLabel": "India Code — The Protection of Women from Domestic Violence Act, 2005"
+    },
+    "POCSO": {
+      "shortTitle": "Protection of Children from Sexual Offences Act, 2012",
+      "actNo": "Act No. 32 of 2012",
+      "kind": "special",
+      "inForceFrom": "2012-12-09",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/2079",
+      "sourceLabel": "India Code — The Protection of Children from Sexual Offences Act, 2012"
+    },
+    "ITACT": {
+      "shortTitle": "Information Technology Act, 2000",
+      "actNo": "Act No. 21 of 2000",
+      "kind": "special",
+      "inForceFrom": "2000-10-17",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/13116",
+      "sourceLabel": "India Code — The Information Technology Act, 2000"
+    },
+    "CPA": {
+      "shortTitle": "Consumer Protection Act, 2019",
+      "actNo": "Act No. 35 of 2019",
+      "kind": "special",
+      "inForceFrom": "2020-07-18",
+      "sourceUrl": "https://consumeraffairs.gov.in/",
+      "sourceLabel": "Department of Consumer Affairs — Consumer Protection Act, 2019"
+    },
+    "NI": {
+      "shortTitle": "Negotiable Instruments Act, 1881",
+      "actNo": "Act No. 26 of 1881",
+      "kind": "special",
+      "inForceFrom": "1881",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/2189",
+      "sourceLabel": "India Code — Negotiable Instruments Act, 1881"
+    },
+    "LSA": {
+      "shortTitle": "Legal Services Authorities Act, 1987",
+      "actNo": "Act No. 39 of 1987",
+      "kind": "special",
+      "inForceFrom": "1987-10-09",
+      "sourceUrl": "https://nalsa.gov.in/",
+      "sourceLabel": "National Legal Services Authority — Legal Services Authorities Act, 1987"
+    },
+    "POSH": {
+      "shortTitle": "Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013",
+      "actNo": "Act No. 14 of 2013",
+      "kind": "special",
+      "inForceFrom": "2013-12-09",
+      "sourceUrl": "https://www.indiacode.nic.in/handle/123456789/5600",
+      "sourceLabel": "India Code — Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013"
+    }
+  },
+  "provisions": [
+    {
+      "id": "BNS-63",
+      "act": "BNS",
+      "section": "63",
+      "heading": "Rape",
+      "summary": "Defines the offence of rape, including the acts that constitute it and the aggravating circumstances in which consent is absent or vitiated.",
+      "category": "sexual-violence",
+      "whyItMatters": "Rape is a cognizable, non-bailable offence. Defining it precisely is the starting point for any sexual-offence complaint.",
+      "keywords": [
+        "rape",
+        "sexual assault",
+        "sexual violence",
+        "consent",
+        "बलात्कार",
+        "यौन उत्पीड़न",
+        "सहमति"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he forced me he did not use a condom he was drunk he drugged my drink"
+    },
+    {
+      "id": "BNS-64",
+      "act": "BNS",
+      "section": "64",
+      "heading": "Punishment for rape",
+      "summary": "Sets out the punishment for rape, with separate enhanced punishment where the victim is under sixteen years, or where the offender is a police officer, public servant, armed forces or staff member of a jail or hospital.",
+      "category": "sexual-violence",
+      "whyItMatters": "Fixes the sentencing range that applies once the offence is established.",
+      "keywords": [
+        "rape",
+        "punishment",
+        "sexual offence",
+        "बलात्कार",
+        "दंड"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "BNS-74",
+      "act": "BNS",
+      "section": "74",
+      "heading": "Assault or use of criminal force to woman with intent to outrage her modesty",
+      "summary": "Whoever assaults or uses criminal force to any woman, intending to outrage or knowing it to be likely that he will thereby outrage her modesty, is punishable with imprisonment of either description for a term of not less than one year and up to five years, and is also liable to fine.",
+      "category": "harassment",
+      "whyItMatters": "This is the standard provision used for physical or attempted molestation that falls short of rape.",
+      "keywords": [
+        "molestation",
+        "modesty",
+        "outraging modesty",
+        "touching",
+        "assault",
+        "woman",
+        "उत्पीड़न",
+        "शोषण",
+        "छूना",
+        "महिला",
+        "मॉडेस्टी"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he grabbed my hand he touched me he pushed me he tried to hug me he forced himself on me in the lift misbehaved with me physically अधिकार छूना गले पकड़ा स्पर्श"
+    },
+    {
+      "id": "BNS-75",
+      "act": "BNS",
+      "section": "75",
+      "heading": "Sexual harassment",
+      "summary": "A man commits sexual harassment by making physical contact and advances involving unwelcome and explicit sexual overtures, a demand or request for sexual favours, showing pornography against the will of a woman, or making sexually coloured remarks. Clauses (i) to (iii) carry rigorous imprisonment up to three years, or fine, or both; clause (iv) carries imprisonment up to one year, or fine, or both.",
+      "category": "harassment",
+      "whyItMatters": "Covers demands for sexual favour and lewd remarks — conduct that does not require physical contact to be an offence.",
+      "keywords": [
+        "sexual harassment",
+        "unwelcome",
+        "sexual overtures",
+        "favours",
+        "remarks",
+        "comments",
+        "whatsapp",
+        "chat",
+        "यौन उत्पीड़न",
+        "अनावश्यक संपर्क",
+        "फोन",
+        "मैसेज"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he keeps messaging me asking for sexual favours asking me to meet him alone sending obscene photos and videos repeated explicit messages lewd chats sexual request अनावश्यक मैसेज यौन प्रस्ताव गंदे फोटो"
+    },
+    {
+      "id": "BNS-76",
+      "act": "BNS",
+      "section": "76",
+      "heading": "Assault or use of criminal force to woman with intent to disrobe",
+      "summary": "Whoever assaults or uses criminal force to any woman, or abets such act, with the intention of disrobing or compelling her to be naked, is punishable with imprisonment of not less than three years and up to seven years, and is also liable to fine.",
+      "category": "sexual-violence",
+      "whyItMatters": "Applies where the offender used force to strip or undress the victim.",
+      "keywords": [
+        "disrobe",
+        "strip",
+        "undress",
+        "naked",
+        "clothes",
+        "कपड़े",
+        "उतारना"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he tried to strip me he pulled my clothes he tried to undress me कपड़े उतारने"
+    },
+    {
+      "id": "BNS-77",
+      "act": "BNS",
+      "section": "77",
+      "heading": "Voyeurism",
+      "summary": "Punishes watching or capturing the image of a woman distributing or displaying such image without her consent. Punishment is imprisonment of not less than one year and up to three years, and fine.",
+      "category": "cyber",
+      "whyItMatters": "Relevant where photographs or recordings of a woman are made or circulated without consent.",
+      "keywords": [
+        "voyeurism",
+        "hidden camera",
+        "photograph",
+        "video",
+        "recording",
+        "चित्र",
+        "वीडियो",
+        "तस्वीर"
+      ],
+      "confidence": "high",
+      "narrativeCues": "hidden camera recording photographs of me a camera was installed in my room"
+    },
+    {
+      "id": "BNS-78",
+      "act": "BNS",
+      "section": "78",
+      "heading": "Stalking",
+      "summary": "Punishes following a woman and contacting or attempting to contact her to foster personal interaction repeatedly despite a clear indication of disinterest, or monitoring her use of the internet, email or any other form of electronic communication. The same act by a person known to the woman to be a blood relative, or a person in authority or in a position of trust, attracts enhanced punishment.",
+      "category": "harassment",
+      "whyItMatters": "Stalking and repeated unwanted contact are cognizable offences and are frequently paired with a domestic violence complaint.",
+      "keywords": [
+        "stalking",
+        "following",
+        "repeated calls",
+        "monitoring",
+        "cyber stalking",
+        "obsession",
+        "stalker",
+        "पीछा",
+        "मैसेज",
+        "फोन कॉल"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he follows me outside my house he keeps calling my number he keeps messaging my new number he monitors my social media he shows up at my office uninvited पीछा फोन नंबर नजर रखना"
+    },
+    {
+      "id": "BNS-79",
+      "act": "BNS",
+      "section": "79",
+      "heading": "Word, gesture or act intended to insult modesty of a woman",
+      "summary": "Punishes any word, sound or gesture, or exhibition of any object, intended to be heard or seen by a woman and intended to insult her modesty. It also covers making a sound or gesture, or exhibiting an object, outside a public place and in a manner likely to be heard or seen by a woman in a public place.",
+      "category": "harassment",
+      "whyItMatters": "Catches verbal and non-verbal conduct that does not amount to criminal intimidation but is still an offence.",
+      "keywords": [
+        "insult modesty",
+        "lewd",
+        "obscene gesture",
+        "comments",
+        "gaali",
+        "verbal",
+        "शब्द",
+        "गाली",
+        "अपशब्द"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he made lewd comments in public he used obscene words he made gestures at me he passedcomments about my body अपशब्द गाली शरारत इशारे"
+    },
+    {
+      "id": "BNS-85",
+      "act": "BNS",
+      "section": "85",
+      "heading": "Husband or relative of husband of a woman subjecting her to cruelty",
+      "summary": "Punishes a husband or his relative who subjects a woman to cruelty by (a) wilfully conduct-ing himself in a manner as to be injurious to her health, physical or mental, or to cause her mental anguish; (b) causing a woman to be subjected to coercion in order to compel her to meet any unlawful demand for dowry; (c) having by words or conduct put her in fear of death or grievous hurt; (d) causing her to be assaulted, abetted or otherwise wronged with intent to coerce her into an unlawful act.",
+      "category": "dowry",
+      "whyItMatters": "The husband-and-relative variant of the dowry-harassment offence. As the statutory heading shows, it requires a husband or a relative of the husband as the offender, which matters when the respondent is a wider family member.",
+      "keywords": [
+        "dowry",
+        "dowry harassment",
+        "dowry death",
+        "cruelty",
+        "matrimonial",
+        "दहेज",
+        "दहेज उत्पीड़न",
+        "पति",
+        "क्रूरता"
+      ],
+      "confidence": "high",
+      "narrativeCues": "for dowry they are asking my father to pay money after marriage my husband and his family keep demanding cash and gold dowry death threats if I do not bring money धोखाधड़ी नहीं दहेज की मांग पति ससुराल के लोगों ने पैसे की मांग"
+    },
+    {
+      "id": "BNS-86",
+      "act": "BNS",
+      "section": "86",
+      "heading": "Cruelty defined",
+      "summary": "Explains what amounts to cruelty for the purposes of section 85, including causing bodily injury or mental suffering, medical or surgical intervention, and unlawful conduct likely to drive the woman to suicide or cause grave injury or danger to life, limb or health.",
+      "category": "dowry",
+      "whyItMatters": "Supplies the interpretive rules that decide whether conduct crosses the line into cruelty.",
+      "keywords": [
+        "cruelty",
+        "mental suffering",
+        "definition",
+        "दहेज",
+        "क्रूरता"
+      ],
+      "confidence": "high",
+      "narrativeCues": "cruelty mental torture emotional abuse not allowed to eat not allowed to work"
+    },
+    {
+      "id": "BNS-115",
+      "act": "BNS",
+      "section": "115",
+      "heading": "Voluntarily causing hurt",
+      "summary": "Defines hurt and punishes voluntarily causing hurt. Hurt is described as bodily pain, disease or infirmity, or any impairment of the organ of the body.",
+      "category": "assault",
+      "whyItMatters": "The default provision for physical injury where no more specific offence applies.",
+      "keywords": [
+        "hurt",
+        "injury",
+        "beating",
+        "assault",
+        "bodily pain",
+        "चोट",
+        "मारपीट",
+        "घायल"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he hit me I have bruises I was beaten my arm is injured I was slapped I was pushed down चोट मारपीट गाली धक्का हाथ पर चोट"
+    },
+    {
+      "id": "BNS-117",
+      "act": "BNS",
+      "section": "117",
+      "heading": "Voluntarily causing grievous hurt",
+      "summary": "Sets out the eight statutory cases that make hurt grievous — including emasculation, permanent privation of the sight of either eye, permanent privation of the hearing of either ear, dismemberment, and fracture or dislocation of a bone or tooth — and prescribes punishment.",
+      "category": "assault",
+      "whyItMatters": "The distinction between hurt and grievous hurt changes the charge and the sentence.",
+      "keywords": [
+        "grievous hurt",
+        "fracture",
+        "serious injury",
+        "hospital",
+        "गंभीर चोट",
+        "हड्डी"
+      ],
+      "confidence": "high",
+      "narrativeCues": "fracture my nose is broken I was hospitalised I was admitted for three days serious injury operation"
+    },
+    {
+      "id": "BNS-126",
+      "act": "BNS",
+      "section": "126",
+      "heading": "Wrongful restraint",
+      "summary": "Whoever restrains a person by force or otherwise, and thereby obstructs that person from proceeding in any direction in which the person has a right to proceed, commits wrongful restraint.",
+      "category": "liberty",
+      "whyItMatters": "Frequently charged alongside wrongful confinement when a person is prevented from leaving.",
+      "keywords": [
+        "wrongful restraint",
+        "preventing from leaving",
+        "confined",
+        "held",
+        "अवरोध",
+        "रोकना"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he stopped me from going out he held me back he blocked the gate he did not let me leave the house अभीरोध बाहर नहीं जाने दिया रोका"
+    },
+    {
+      "id": "BNS-127",
+      "act": "BNS",
+      "section": "127",
+      "heading": "Wrongful confinement",
+      "summary": "Whoever wrongfully restrains a person by confining him in any bounds within which such person is not at liberty to be, commits wrongful confinement.",
+      "category": "liberty",
+      "whyItMatters": "Directly relevant where a person is held against their will, including within a shared household.",
+      "keywords": [
+        "wrongful confinement",
+        "locked",
+        "confined",
+        "kidnapping",
+        "बंद",
+        "कैद"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he locked me in the room he kept me inside the house I was not allowed to go out बंद कर दिया अंदर रखा"
+    },
+    {
+      "id": "BNS-329",
+      "act": "BNS",
+      "section": "329",
+      "heading": "Criminal trespass and house-trespass",
+      "summary": "Defines criminal trespass and house-trespass, including house-trespass having a guilty intention or knowledge that it may lead to hurt or assault, and house-trespass by a person armed with a weapon.",
+      "category": "property",
+      "whyItMatters": "Relevant to unlawful entry into a home or premises, including by an estranged partner.",
+      "keywords": [
+        "trespass",
+        "house trespass",
+        "entered my house",
+        "without permission",
+        " trespass",
+        "घर में घुसना",
+        "अनधिकृत प्रवेश"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he entered my house without permission he broke the lock he came inside while I was away घर में घुसा ताला तोड़ा"
+    },
+    {
+      "id": "BNS-351",
+      "act": "BNS",
+      "section": "351",
+      "heading": "Criminal intimidation",
+      "summary": "Whoever by words, gestures or any other means, intends to compel or cause a person to do or omit to do something he is not legally bound to do or omit, by threatening that harm shall be caused to that person or to his property, commits criminal intimidation.",
+      "category": "harassment",
+      "whyItMatters": "Covers threats, including threats conveyed through family or third parties.",
+      "keywords": [
+        "threat",
+        "criminal intimidation",
+        "threatening",
+        "danger",
+        "डराना",
+        "धमकी",
+        "जान से मालूम करा देना"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he threatened to kill me he said he will ruin my family he threatened me on the phone he said he knows where I live धमकी जान से मालूम करा देना"
+    },
+    {
+      "id": "BNS-315",
+      "act": "BNS",
+      "section": "315",
+      "heading": "Dishonestly misappropriating property",
+      "summary": "Punishes dishonestly misappropriating or converting to one's own use any movable property.",
+      "category": "property",
+      "whyItMatters": "The standard charge for someone taking money or goods belonging to another.",
+      "keywords": [
+        "theft",
+        "stolen",
+        "misappropriat",
+        "money taken",
+        "चोरी",
+        "पैसे",
+        "माल"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he took my money he used my money he took my phone and money he kept my jewellery"
+    },
+    {
+      "id": "BNS-318",
+      "act": "BNS",
+      "section": "318",
+      "heading": "Cheating",
+      "summary": "Defines cheating as deceiving a person by inducing him to deliver property, or to consent to its retention, or intentionally inducing him to do or omit to do something he would not otherwise do, causing or likely to cause damage or harm in body, mind, reputation or property.",
+      "category": "fraud",
+      "whyItMatters": "Cheating and cheating by personation are the core civil-side and criminal-side fraud charges.",
+      "keywords": [
+        "cheating",
+        "fraud",
+        "deceived",
+        "scam",
+        "loan",
+        "फ्रॉड",
+        "धोखा",
+        "ठगी"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "BNS-319",
+      "act": "BNS",
+      "section": "319",
+      "heading": "Cheating by personation",
+      "summary": "Punishes cheating by pretending to be some other person, or knowingly substituting one person for another, or representing that one is a person other than one really is.",
+      "category": "fraud",
+      "whyItMatters": "Applies where the fraudster impersonates a bank, a company or an individual.",
+      "keywords": [
+        "impersonation",
+        "fake",
+        "personation",
+        "pretending",
+        "नकल",
+        "फर्सा"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "BNSS-173",
+      "act": "BNSS",
+      "section": "173",
+      "heading": "Information in cognizable cases",
+      "summary": "Every information relating to the commission of a cognizable offence, irrespective of the area where the offence is committed, may be given orally or by electronic communication to an officer in charge of a police station. If given orally it must be reduced to writing, read over to the informant and signed by them. Information given electronically must be signed by the informant within three days and the substance entered in a book. A copy must be given forthwith, free of cost, to the informant or the victim. Where the information alleges an offence against a woman under listed sections of the BNS, it must be recorded by a woman police officer or woman officer. Where the informant is mentally or physically disabled, the recording is to take place at the informant's residence or a place of their choice, in the presence of an interpreter or special educator, and the recording must be videographed. Any person aggrieved by a refusal to record may send the substance in writing by post to the Superintendent of Police concerned.",
+      "category": "procedure",
+      "whyItMatters": "This is the provision that makes the police station, and any police station, the place to register a cognizable offence — and it gives specific protections to women and to persons with disabilities.",
+      "keywords": [
+        "fir",
+        "first information report",
+        "police station",
+        "complaint",
+        "write in writing",
+        "copy of fir",
+        "एफआईआर",
+        "पुलिस",
+        "शिकायत",
+        "लिखित"
+      ],
+      "confidence": "high",
+      "narrativeCues": "how to file an FIR where do I go to the police they did not register my complaint they refused to write my statement I want a copy of the FIR पुलिस शिकायत एफआईआर लिखाने से मना कॉपी"
+    },
+    {
+      "id": "BNSS-174",
+      "act": "BNSS",
+      "section": "174",
+      "heading": "Information as to non-cognizable cases and investigation of such cases",
+      "summary": "Where information of a non-cognizable offence is given to an officer in charge of a police station, the substance must be entered in a book and a copy given to the informant free of cost. A Magistrate empowered to take cognizance may order an investigation.",
+      "category": "procedure",
+      "whyItMatters": "Where the alleged act is not cognizable, the written entry and the Magistrate's order become the next step.",
+      "keywords": [
+        "non cognizable",
+        "magistrate",
+        "investigation ordered",
+        "non-cognizable"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "BNSS-176",
+      "act": "BNSS",
+      "section": "176",
+      "heading": "Procedure for investigation",
+      "summary": "Describes the investigation steps, including completion of investigation and submission of the report to the Magistrate empowered to take cognizance of the offence.",
+      "category": "procedure",
+      "whyItMatters": "Frames the police report stage that follows registration.",
+      "keywords": [
+        "investigation",
+        "police report",
+        "inquiry",
+        "जांच"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "BNSS-184",
+      "act": "BNSS",
+      "section": "184",
+      "heading": "Medical examination of the victim of rape",
+      "summary": "Requires that a victim of rape be medically examined by a woman doctor in the presence of the woman or her attendant, and provides for examination where such examination cannot be immediately given.",
+      "category": "procedure",
+      "whyItMatters": "Medical examination is time-sensitive and is among the first things to arrange.",
+      "keywords": [
+        "medical examination",
+        "forensic",
+        "hospital",
+        "doctor",
+        "samples",
+        "मेडिकल",
+        "अस्पताल"
+      ],
+      "confidence": "high",
+      "narrativeCues": "hospital examination for me I need a medical test I was assaulted doctor report"
+    },
+    {
+      "id": "BNSS-145",
+      "act": "BNSS",
+      "section": "145",
+      "heading": "Order for maintenance of wives, children and parents",
+      "summary": "If a person with sufficient means neglects or refuses to maintain his wife unable to maintain herself, his legitimate or illegitimate minor child, his adult child unable to maintain itself, or his father or mother unable to maintain themselves, a Magistrate may order a monthly allowance.",
+      "category": "maintenance",
+      "whyItMatters": "A maintenance application is available independently of, and alongside, a domestic violence complaint.",
+      "keywords": [
+        "maintenance",
+        "alimony",
+        "support",
+        "child maintenance",
+        "गुजारा",
+        "भरण-पोषण",
+        "मासिक"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he does not give me money for the child he has stopped paying for my expenses maintenance बच्चे का खर्चा गुजारा भरण पोषण"
+    },
+    {
+      "id": "DVA-3",
+      "act": "DVA",
+      "section": "3",
+      "heading": "Definition of domestic violence",
+      "summary": "Any act, omission, commission or conduct of the respondent constitutes domestic violence where it (a) harms or injures or endangers the health, safety, life, limb or well-being, whether mental or physical, of the aggrieved person or tends to do so, including physical abuse, sexual abuse, verbal and emotional abuse and economic abuse; or (b) harasses, harms, injures or endangers the aggrieved person with a view to coercing her or any related person to meet any unlawful demand for any dowry or other property; or (c) has the effect of threatening the aggrieved person or any related person by any conduct in clause (a) or (b); or (d) otherwise injures or causes harm, whether physical or mental.",
+      "category": "domestic-violence",
+      "whyItMatters": "The statutory definition is broad. Economic abuse and emotional abuse are within it, and so is conduct by relatives or other persons in the household.",
+      "keywords": [
+        "domestic violence",
+        "abuse",
+        "economic abuse",
+        "emotional abuse",
+        "physical abuse",
+        "violence",
+        "घरेलू हिंसा",
+        "मारपीट",
+        "डराना",
+        "पैसा"
+      ],
+      "confidence": "high",
+      "narrativeCues": "abused beaten hit struck pushed kicked threatened by husband by mother in law by family at home by brother in law by sister in law by relative by friend staying with me domestic relationship husband and wife married couple अभीरोध अत्याचार पति द्वारा सास द्वारा परिवार द्वारा मारा पीटा धक्का"
+    },
+    {
+      "id": "DVA-5",
+      "act": "DVA",
+      "section": "5",
+      "heading": "Duties of police officers, service providers and Magistrate",
+      "summary": "Sets out the duties of police officers, service providers and the Magistrate, including information to the Protection Officer and the duties of medical facilities and shelter homes under sections 6 and 7.",
+      "category": "domestic-violence",
+      "whyItMatters": "Requires the police to act on a domestic violence complaint and to assist in service of process.",
+      "keywords": [
+        "police duty",
+        "domestic violence",
+        "protection officer",
+        "medical facility",
+        "shelter",
+        "डॉक्टर",
+        "शेल्टर"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "DVA-12",
+      "act": "DVA",
+      "section": "12",
+      "heading": "Application to Magistrate",
+      "summary": "An aggrieved person, a Protection Officer, or any other person on her behalf may present an application to the Magistrate seeking one or more reliefs under the Act. Every such application shall be made in such form and manner as may be prescribed.",
+      "category": "domestic-violence",
+      "whyItMatters": "The application is the entry point to the entire scheme. It can be filed by the aggrieved person, the Protection Officer, or a person acting on her behalf.",
+      "keywords": [
+        "application",
+        "magistrate",
+        "petition",
+        "filing",
+        "complaint",
+        "आवेदन",
+        "मजिस्ट्रेट"
+      ],
+      "confidence": "high",
+      "narrativeCues": "apply magistrate how to file complaint application petition court paper work first step relief domestic violence अवेदन दायर करना अदालत"
+    },
+    {
+      "id": "DVA-16",
+      "act": "DVA",
+      "section": "16",
+      "heading": "Proceedings to be held in camera",
+      "summary": "Every proceeding under the Act shall be conducted in camera.",
+      "category": "domestic-violence",
+      "whyItMatters": "Hearings are not open to the public, which affects who may attend and how information should be handled.",
+      "keywords": [
+        "in camera",
+        "privacy",
+        "closed court",
+        "गोपनीय"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "DVA-17",
+      "act": "DVA",
+      "section": "17",
+      "heading": "Right to reside in a shared household",
+      "summary": "Every woman in a domestic relationship has the right to reside in the shared household, whether or not she has any right, title or beneficial interest in it, and shall not be evicted or excluded from the household except in accordance with the procedure established by law.",
+      "category": "domestic-violence",
+      "whyItMatters": "This is the provision relied on when a woman is thrown out of the family home. It is also the provision at the centre of the leading Supreme Court decision on residence orders.",
+      "keywords": [
+        "shared household",
+        "reside",
+        "evicted",
+        "thrown out",
+        "home",
+        "घर",
+        "निवास",
+        "रहने का अधिकार"
+      ],
+      "confidence": "high",
+      "narrativeCues": "thrown out of the house told me to leave my home cannot stay with my husband shifted out staying at my parents no right in the property bought by in laws निवास घर से बाहर निकाल दिया मायके भेज दिया"
+    },
+    {
+      "id": "DVA-18",
+      "act": "DVA",
+      "section": "18",
+      "heading": "Protection orders",
+      "summary": "The Magistrate may pass an order directing the respondent to take such steps as may be required to prevent further acts of domestic violence, or to ensure the safety of the aggrieved person.",
+      "category": "domestic-violence",
+      "whyItMatters": "A protection order is the fastest practical remedy and can be combined with monetary relief in a single application.",
+      "keywords": [
+        "protection order",
+        "stay away",
+        "no contact",
+        "safety",
+        "सुरक्षा",
+        "आदेश"
+      ],
+      "confidence": "high",
+      "narrativeCues": "stay away order do not contact me no phone calls order from court protection नजर रखना दूरी संपर्क आदेश"
+    },
+    {
+      "id": "DVA-19",
+      "act": "DVA",
+      "section": "19",
+      "heading": "Residence orders",
+      "summary": "The aggrieved person may require the respondent to vacate the shared household or a part of it, or to reside in a residence within the shared household that is specified by the Magistrate.",
+      "category": "domestic-violence",
+      "whyItMatters": "Allows either party to be directed to a specific residence within the shared household.",
+      "keywords": [
+        "residence order",
+        "vacate",
+        "shared household",
+        "निवास आदेश"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "DVA-20",
+      "act": "DVA",
+      "section": "20",
+      "heading": "Monetary reliefs",
+      "summary": "The Magistrate may order monetary relief at any stage of the hearing for expenses incurred in connection with the proceeding, maintenance, loss of earnings, medical expenses, custom, transportation and other similar losses.",
+      "category": "domestic-violence",
+      "whyItMatters": "Monetary relief is recoverable quickly and does not require proving a criminal offence.",
+      "keywords": [
+        "monetary relief",
+        "maintenance",
+        "compensation",
+        "medical expenses",
+        "loss of earnings",
+        "मुआवजा",
+        "पैसा"
+      ],
+      "confidence": "high",
+      "narrativeCues": "money financial support for rent for medicines pocket money खर्चा पैसा दवाई किराया"
+    },
+    {
+      "id": "DVA-21",
+      "act": "DVA",
+      "section": "21",
+      "heading": "Custody orders",
+      "summary": "The Magistrate may grant temporary custody of any child to the aggrieved person or the person making the application on her behalf, and specify the arrangements for visits.",
+      "category": "domestic-violence",
+      "whyItMatters": "Custody can be granted in the same proceeding as the protection order, including interim custody.",
+      "keywords": [
+        "custody",
+        "child",
+        "children",
+        "guardianship",
+        "हिरासत",
+        "बच्चे",
+        "अभिभावक"
+      ],
+      "confidence": "high",
+      "narrativeCues": "who will look after the children custody of my kids school बच्चों की देखभाल हिरासत"
+    },
+    {
+      "id": "DVA-23",
+      "act": "DVA",
+      "section": "23",
+      "heading": "Power to grant interim and ex parte orders",
+      "summary": "The Magistrate may at any stage of the hearing grant interim relief, and may pass an ex parte order where the respondent fails to appear and service has been effected, subject to the safeguards set out in the section.",
+      "category": "domestic-violence",
+      "whyItMatters": "Interim relief can be granted in the same sitting, and ex parte relief is available where the respondent avoids service.",
+      "keywords": [
+        "interim",
+        "ex parte",
+        "interim relief",
+        "ad interim",
+        "अंतरिम",
+        "तत्काल"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "DVA-27",
+      "act": "DVA",
+      "section": "27",
+      "heading": "Jurisdiction",
+      "summary": "The proceedings lie before the Judicial Magistrate of the first class or the Metropolitan Magistrate in whose territorial jurisdiction the respondent resides or causes or permits the act complained of, or where the aggrieved person resides or last resided in the domestic relationship.",
+      "category": "domestic-violence",
+      "whyItMatters": "Determines which court to approach, and is the first practical question in a domestic violence matter.",
+      "keywords": [
+        "jurisdiction",
+        "which court",
+        "magistrate",
+        "territorial",
+        "अधिकार क्षेत्र",
+        "कौन सा कोर्ट"
+      ],
+      "confidence": "high",
+      "narrativeCues": "which court where do I go jurisdiction tehsil city district कहाँ कोर्ट अधिकार क्षेत्र"
+    },
+    {
+      "id": "DVA-29",
+      "act": "DVA",
+      "section": "29",
+      "heading": "Appeal",
+      "summary": "An aggrieved person, the respondent or a person making an application on the aggrieved person's behalf may prefer an appeal against an order passed under the Act before the Sessions Judge.",
+      "category": "domestic-violence",
+      "whyItMatters": "Identifies the appellate forum and the window for exercising that right.",
+      "keywords": [
+        "appeal",
+        "sessions judge",
+        "अपील"
+      ],
+      "confidence": "high",
+      "narrativeCues": "appeal against the order wrong decision by the magistrate अपील"
+    },
+    {
+      "id": "POCSO-19",
+      "act": "POCSO",
+      "section": "19",
+      "heading": "Reporting of offences",
+      "summary": "Any person who has apprehension that an offence under the Act is likely to be committed or has knowledge that such an offence has been committed, must inform the Special Juvenile Police Unit or the local police. Failure to report or to record the information attracts punishment. The provisions apply notwithstanding the exclusion of the offence against the civil jurisdiction of a civil court.",
+      "category": "child-safety",
+      "whyItMatters": "Reporting a suspected offence against a child is a legal duty, not an option, and failure to report is itself punishable.",
+      "keywords": [
+        "mandatory reporting",
+        "duty to report",
+        "child",
+        "special juvenile police unit",
+        "sjpu",
+        "अनिवार्य रिपोर्ट",
+        "बच्चा",
+        "बालिका"
+      ],
+      "confidence": "high",
+      "narrativeCues": "a child told me that something happened to her I must report this I saw something happening to a minor बच्ची ने बताया बालिका"
+    },
+    {
+      "id": "POCSO-21",
+      "act": "POCSO",
+      "section": "21",
+      "heading": "Punishment for failure to report or record a case",
+      "summary": "Punishes any person who fails to report an offence under the Act, or who fails to record such information. A child is not punishable under this section for failure to report.",
+      "category": "child-safety",
+      "whyItMatters": "Explains why adults around a child — including relatives and institution staff — may be liable for silence.",
+      "keywords": [
+        "failure to report",
+        "punishment",
+        "child",
+        "अनिवार्य रिपोर्ट",
+        "दण्ड"
+      ],
+      "confidence": "high",
+      "narrativeCues": "I did not report it I was afraid I did not tell the police in time"
+    },
+    {
+      "id": "POCSO-28",
+      "act": "POCSO",
+      "section": "28",
+      "heading": "Designation of Special Courts",
+      "summary": "The State Government may designate courts as Special Courts for the purposes of the Act, and a Court of Session notified as a children's court, or a Special Court designated for similar purposes under any other law, is deemed to be a Special Court under this section.",
+      "category": "child-safety",
+      "whyItMatters": "Identifies the forum for a child sexual offence matter.",
+      "keywords": [
+        "special court",
+        "designation",
+        "children court",
+        "specialised court",
+        "विशेष न्यायालय"
+      ],
+      "confidence": "high",
+      "narrativeCues": "which special court will hear this case where is the children court"
+    },
+    {
+      "id": "POCSO-40",
+      "act": "POCSO",
+      "section": "40",
+      "heading": "Right of child to take assistance of legal practitioner",
+      "summary": "Any child affected by an offence under the Act has the right to be represented by a legal practitioner.",
+      "category": "child-safety",
+      "whyItMatters": "Confirms the child's independent right to representation.",
+      "keywords": [
+        "legal aid",
+        "lawyer",
+        "representation",
+        "वकील",
+        "कानूनी सहायता"
+      ],
+      "confidence": "high",
+      "narrativeCues": "the child needs a lawyer the child should have representation"
+    },
+    {
+      "id": "ITACT-43",
+      "act": "ITACT",
+      "section": "43",
+      "heading": "Punishment for cheating",
+      "summary": "Punishes a person who cheats a person or induces that person to deliver property, or intentionally induces them to do or omit to do something they would not otherwise do, where the inducement causes or is likely to cause damage or harm in body, mind, reputation or property. A person who cheats with the intent or knowledge that the loss may be inflicted upon another, is also punishable.",
+      "category": "cyber",
+      "whyItMatters": "The central IT offence for online financial fraud, such as fake payment links or credential phishing.",
+      "keywords": [
+        "cheating",
+        "fraud",
+        "online fraud",
+        "phishing",
+        "fake link",
+        "otp",
+        "payment",
+        "धोखा",
+        "ऑनलाइन धोखाधड़ी",
+        "फ्रॉड कॉल"
+      ],
+      "confidence": "high",
+      "narrativeCues": "I clicked a link and entered my OTP money was debited from my account someone called pretending to be from the bank I lost money in online fraud क्लिक किया ओटीपी पैसे उड़ गए बैंक का नाम बताकर"
+    },
+    {
+      "id": "ITACT-66E",
+      "act": "ITACT",
+      "section": "66E",
+      "heading": "Violation of privacy",
+      "summary": "Whoever intentionally or knowingly captures, publishes or transmits the image of a private area of any person without his or her consent, under circumstances violating that person's privacy, is punishable.",
+      "category": "cyber",
+      "whyItMatters": "Relevant where intimate images or recordings are captured or circulated without consent.",
+      "keywords": [
+        "privacy",
+        "intimate images",
+        "private area",
+        "morphed",
+        "viral",
+        "निजता",
+        "तस्वीर",
+        "वीडियो"
+      ],
+      "confidence": "high",
+      "narrativeCues": "my private photos were leaked my intimate video was circulated without my consent morphed photos निजता तस्वीरें फैल गईं"
+    },
+    {
+      "id": "ITACT-66F",
+      "act": "ITACT",
+      "section": "66F",
+      "heading": "Act of obscenity by an electronic communication",
+      "summary": "Whoever intentionally or knowingly electronically communicates or causes to be communicated any information which is obscene, sexually explicit, or a threat, under circumstances which are harmful to the dignity or security of a woman, is punishable.",
+      "category": "cyber",
+      "whyItMatters": "Covers obscene electronic messages directed at harming a woman's dignity or security.",
+      "keywords": [
+        "obscene",
+        "electronic communication",
+        "threat",
+        "lewd message",
+        "अश्लील",
+        "अभद्र संदेश",
+        "धमकी"
+      ],
+      "confidence": "high",
+      "narrativeCues": "he sent me threatening messages on my phone abusive messages degrading messages"
+    },
+    {
+      "id": "ITACT-67",
+      "act": "ITACT",
+      "section": "67",
+      "heading": "Punishment for publishing or transmitting of material containing sexually explicit act, etc., in electronic form",
+      "summary": "Punishes a person who publishes or transmits material in electronic form which is obscene, or contains sexually explicit act or imagery, and punishes a person who deliberately introduces or causes to be introduced obscene or sexually explicit material into a computer resource, and the display or projection of such material to an officer or other person.",
+      "category": "cyber",
+      "whyItMatters": "Applies where obscene material is forwarded or re-shared, including by a person who merely receives and passes it on.",
+      "keywords": [
+        "obscene material",
+        "forwarding",
+        "transmit",
+        "electronic form",
+        "viral video",
+        "अश्लील सामग्री",
+        "फॉरवर्ड"
+      ],
+      "confidence": "high",
+      "narrativeCues": "obscene videos were forwarded on my phone someone sent me obscene material"
+    },
+    {
+      "id": "ITACT-66C",
+      "act": "ITACT",
+      "section": "66C",
+      "heading": "Punishment for identity theft",
+      "summary": "Punishes a person who fraudulently or dishonestly makes a document, signature or any other thing that purports to be an identity document, and a person who fraudulently or dishonestly uses a document, signatory seal or other document that purports to be an identity document as if it were issued by an appropriate authority, and a person who knowingly cheats or steals identity documents.",
+      "category": "cyber",
+      "whyItMatters": "Applies where someone impersonates the complainant to open an account or obtain a loan.",
+      "keywords": [
+        "identity theft",
+        "impersonation",
+        "documents",
+        "loan fraud",
+        "पहचान",
+        "नकली"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "ITACT-69",
+      "act": "ITACT",
+      "section": "69",
+      "heading": "Power to issue directions for interception, monitoring or decryption",
+      "summary": "Empowers the Controller to direct interception, monitoring or decryption of any information generated, transmitted, received or stored in any computer resource, subject to the procedure laid down in the section and Section 67B.",
+      "category": "cyber",
+      "whyItMatters": "Provides the legal basis on which an officer may direct a service provider to disclose or preserve data. It also matters when a victim wants to know how far a lawful request can go.",
+      "keywords": [
+        "interception",
+        "monitoring",
+        "decryption",
+        "controller",
+        "data preservation",
+        "निगरानी",
+        "डेटा"
+      ],
+      "confidence": "high",
+      "narrativeCues": "bank did not stop the transaction I reported to the RBI cyber cell helpline"
+    },
+    {
+      "id": "CPA-2-11",
+      "act": "CPA",
+      "section": "2(11)",
+      "heading": "Definitions — deficiency",
+      "summary": "\"Deficiency\" means any fault, imperfection, shortcoming or inadequacy in the quality, nature and manner of performance which is required to be maintained by law, or has been undertaken to be performed by a person in pursuance of a contract or otherwise.",
+      "category": "consumer",
+      "whyItMatters": "Deficiency is the threshold concept of a consumer complaint. What looks like a service failure may or may not meet it.",
+      "keywords": [
+        "deficiency",
+        "deficiency of service",
+        "poor service",
+        "not as promised",
+        "कमजोरी",
+        "सेवा"
+      ],
+      "confidence": "high",
+      "narrativeCues": "the service was poor they did not respond they promised a refund and did not deliver the service was defective"
+    },
+    {
+      "id": "CPA-35",
+      "act": "CPA",
+      "section": "35",
+      "heading": "Complaints to District Commission",
+      "summary": "A complaint in relation to goods sold, delivered or agreed to be sold or delivered, or any service provided or agreed to be provided, may be filed with a District Commission by the consumer, a recognised consumer association, the Central or State Government, or one or more consumers jointly or severally.",
+      "category": "consumer",
+      "whyItMatters": "The District Commission is the ordinary first forum for a consumer complaint.",
+      "keywords": [
+        "consumer forum",
+        "district commission",
+        "complaint",
+        "e-daakhil",
+        "उपभोक्ता",
+        "शिकायत"
+      ],
+      "confidence": "high",
+      "narrativeCues": "I want to file a consumer complaint against the seller I bought a defective product from an online shop"
+    },
+    {
+      "id": "CPA-47",
+      "act": "CPA",
+      "section": "47",
+      "heading": "Jurisdiction of State Commission",
+      "summary": "The State Commission has jurisdiction to entertain complaints where the value of the goods or services paid as consideration exceeds one crore rupees but does not exceed ten crore rupees, and complaints against unfair contracts where the value does not exceed ten crore rupees.",
+      "category": "consumer",
+      "whyItMatters": "Fixes the value band that determines whether the District, State or National Commission hears the matter.",
+      "keywords": [
+        "state commission",
+        "jurisdiction",
+        "one crore",
+        "ten crore",
+        "pecuniary",
+        "अधिकार क्षेत्र"
+      ],
+      "confidence": "high",
+      "narrativeCues": "my claim is worth more than one crore which commission should I approach"
+    },
+    {
+      "id": "CPA-62",
+      "act": "CPA",
+      "section": "62",
+      "heading": "Transfer of complaints",
+      "summary": "On the application of the complainant or of its own motion, the National Commission may, in the interest of justice, transfer any complaint pending before the District Commission of one State to a District Commission of another State.",
+      "category": "consumer",
+      "whyItMatters": "Provides a route when the seller or service provider sits in another State.",
+      "keywords": [
+        "transfer",
+        "another state",
+        "transfer of complaint",
+        "transfer"
+      ],
+      "confidence": "high",
+      "narrativeCues": "the company is in another state I want to transfer my complaint"
+    },
+    {
+      "id": "NI-138",
+      "act": "NI",
+      "section": "138",
+      "heading": "Compensation for dishonour of cheque",
+      "summary": "Where a cheque drawn on an account maintained by a person for the discharge, in whole or in part, of any debt or other liability is returned unpaid because the amount on the cheque exceeds the balance, or the payee has no account in the form in which the payee maintains that account, or the cheque is signed by the drawer on an account which he has no authority to so sign, the drawer is deemed to have committed an offence. The payee has to give a written notice to the drawer, and if no good cause is shown within fifteen days, the drawer is punishable with imprisonment of up to two years or a fine of up to twice the amount of the cheque, or both.",
+      "category": "financial",
+      "whyItMatters": "The written fifteen-day notice is the mandatory first step; without it the complaint fails.",
+      "keywords": [
+        "cheque",
+        "dishonour",
+        "bounce",
+        "notice",
+        "15 days",
+        "recovery",
+        "चेक",
+        "अनादायी"
+      ],
+      "confidence": "high",
+      "narrativeCues": "my cheque bounced the bank returned my cheque insufficient funds I did not pay the debt I issued a cheque for the loan amount चेक वापस लौटा पैसे नहीं थे"
+    },
+    {
+      "id": "LSA-12C",
+      "act": "LSA",
+      "section": "12(c)",
+      "heading": "Eligibility for legal services",
+      "summary": "Section 12(c) makes available free legal services, inter alia, to a woman or a child who is in need of protection under any relevant law, and section 12(f) covers a person who is in receipt of income below the notified figure or is otherwise unable to pay the fees charged by an advocate. Eligibility is not restricted to means-tested applicants.",
+      "category": "aid",
+      "whyItMatters": "Establishes the entitlement to free legal representation and the sections under which a woman in need of protection is eligible.",
+      "keywords": [
+        "legal aid",
+        "free lawyer",
+        "nalsa",
+        "dlsa",
+        "nalSA",
+        "legal services",
+        "मुफ्त वकील",
+        "कानूनी सहायता"
+      ],
+      "confidence": "high",
+      "narrativeCues": "I cannot afford a lawyer I need free legal help I want a lawyer appointed for me मुफ्त वकील लोनामंद"
+    },
+    {
+      "id": "POSH-3",
+      "act": "POSH",
+      "section": "3",
+      "heading": "Definitions — sexual harassment",
+      "summary": "Section 3 defines sexual harassment at the workplace, and requires the employer to make available to the worker a safe working environment and display the penal consequences of and the applicable procedure for the complaint at the workplace.",
+      "category": "harassment",
+      "whyItMatters": "Establishes the internal committee route that must ordinarily be exhausted before approaching the police.",
+      "keywords": [
+        "workplace",
+        "internal committee",
+        "icc",
+        "office",
+        "employer",
+        "कार्यस्थल",
+        "ऑफिस",
+        "कार्यस्थल पर उत्पीड़न"
+      ],
+      "confidence": "high",
+      "narrativeCues": "at my office my manager passed remarks about my appearance he follows me at office he asks me to sit closer"
+    },
+    {
+      "id": "POSH-6",
+      "act": "POSH",
+      "section": "6",
+      "heading": "Complaint Internal Committee",
+      "summary": "The employer shall constitute an Internal Committee at each workplace, conducted by a Presiding Officer, and the worker aggrieved may file a complaint with it in writing within three months of the incident.",
+      "category": "harassment",
+      "whyItMatters": "The three-month window from the incident is the constraint that decides whether a complaint can still be made.",
+      "keywords": [
+        "internal committee",
+        "three months",
+        "presiding officer",
+        "workplace",
+        "internal complaints committee"
+      ],
+      "confidence": "high",
+      "narrativeCues": "I filed a complaint with the internal committee at the office the ICC did not take action महिला समिति शिकायत ऑफिस"
+    }
+  ]
+}

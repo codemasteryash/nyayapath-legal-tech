@@ -1,0 +1,137 @@
+ABSTRACT PROBLEM STATEMENT PS5
+Know Your Rights in Ten Minutes: AI-Driven Legal Advocate & Pro Se
+Strategy Engine
+Team Name: [Team Name] Team ID: [Team ID] Domain: Legal Tech & Access to Justice
+1. PROBLEM STATEMENT
+People facing harassment, legal disputes, or rights violations rarely know which legal provisions apply, which court or
+agency to approach, or what evidence is required to build a viable case. When conventional legal counsel is
+unaffordable or unavailable, self-represented litigants are left to navigate complex court processes entirely alone.
+Existing legal chatbots offer little practical help: they deliver surface-level definitions, lack multi-statutory reasoning,
+hallucinate deadlines and sections, and cannot synthesize case facts with past judicial precedents—leaving vulnerable
+citizens without actionable defense strategies.
+2. PROPOSED SOLUTION
+We present a comprehensive legal intelligence assistant designed to serve as a reliable digital advisor and pro se
+defense companion. The system takes case narratives in Hindi or English, parses uploaded case files and evidentiary
+PDFs, uncovers critical cues, and cross-links related statutory provisions across criminal, civil, and special laws. It
+pulls matching historical court judgments to establish legal grounds and generates a complete action plan—equipping
+users to represent themselves effectively when no attorney is available.
+3. CORE SYSTEM CAPABILITIES
+CAPABILITY TECHNICAL IMPLEMENTATION PRACTICAL UTILITY
+Document Parsing & Cue
+Extraction
+Extracts timeline events, facts, and documentary proof
+from uploaded PDFs and user notes.
+Identifies hidden facts and
+structures loose case details.
+Cross-Statute Interlinking Maps extracted facts across an indexed graph of penal
+codes, civil remedies, and special laws.
+Connects overlapping legal
+sections into a single argument.
+Precedent Retrieval Uses dense vector search to match current facts with
+historical rulings and binding ratios.
+Provides authoritative past
+judgment citations for court.
+Pro Se Defense Blueprint Generates step-by-step court roadmaps, required
+forms, arguments, and filing guidance.
+Enables individuals to present
+their own cases directly.
+4. TECHNICAL APPROACH & GUARDRAILS
+A. Retrieval & Strategy Pipeline
+Multilingual Processing: Handles Hindi,
+English, and mixed-language queries, mapping
+them directly to underlying legal concepts.
+Cross-Referencing Engine: Links facts to
+specific sections across different statutes
+simultaneously to avoid missing claims.
+Precedent Search: Retrieves matching judicial
+rulings from indexed legal databases based on fact
+pattern similarities.
+B. Grounding & Veriﬁcation
+Deterministic Auditing: Every section, form,
+office, and deadline in the generated output is
+strictly validated against the knowledge base.
+Zero Hallucination Guarantee: Sentences
+that cannot be cited directly are removed. If data
+is missing, the system redirects to legal aid
+(DLSA).
+Session Privacy: Runs ephemerally without
+storing personal user information or case history.
+5. EXPECTED IMPACT & DELIVERY
+By giving citizens clear, verified first steps and complete procedural blueprints, the system levels the playing field for
+self-represented litigants. This directly supports SDG 16 (Peace, Justice, and Strong Institutions), SDG 5 (Gender
+Equality), and SDG 10 (Reduced Inequalities).
+Implementation Stack: Light React web app frontend, Spring Boot backend API, and a Python vector retrieval
+engine. Designed to run smoothly over slow network connections with sub-10-minute turnaround times.
+Abstract Problem Statement PS5 — Legal Tech Strategy Engine Page 1 of 1
+ABSTRACT PROBLEM STATEMENT PS5
+Know Your Rights in Ten Minutes: AI-Driven Legal Advocate & Pro Se
+Strategy Engine
+Team Name: [Team Name] Team ID: [Team ID] Domain: Legal Tech & Access to Justice
+1. PROBLEM STATEMENT
+People facing harassment, legal disputes, or rights violations rarely know which legal provisions apply, which court or
+agency to approach, or what evidence is required to build a viable case. When conventional legal counsel is
+unaffordable or unavailable, self-represented litigants are left to navigate complex court processes entirely alone.
+Existing legal chatbots offer little practical help: they deliver surface-level definitions, lack multi-statutory reasoning,
+hallucinate deadlines and sections, and cannot synthesize case facts with past judicial precedents—leaving vulnerable
+citizens without actionable defense strategies.
+2. PROPOSED SOLUTION
+We present a comprehensive legal intelligence assistant designed to serve as a reliable digital advisor and pro se
+defense companion. The system takes case narratives in Hindi or English, parses uploaded case files and evidentiary
+PDFs, uncovers critical cues, and cross-links related statutory provisions across criminal, civil, and special laws. It
+pulls matching historical court judgments to establish legal grounds and generates a complete action plan—equipping
+users to represent themselves effectively when no attorney is available.
+3. CORE SYSTEM CAPABILITIES
+CAPABILITY TECHNICAL IMPLEMENTATION PRACTICAL UTILITY
+Document Parsing & Cue
+Extraction
+Extracts timeline events, facts, and documentary proof
+from uploaded PDFs and user notes.
+Identifies hidden facts and
+structures loose case details.
+Cross-Statute Interlinking Maps extracted facts across an indexed graph of penal
+codes, civil remedies, and special laws.
+Connects overlapping legal
+sections into a single argument.
+Precedent Retrieval Uses dense vector search to match current facts with
+historical rulings and binding ratios.
+Provides authoritative past
+judgment citations for court.
+Pro Se Defense Blueprint Generates step-by-step court roadmaps, required
+forms, arguments, and filing guidance.
+Enables individuals to present
+their own cases directly.
+4. TECHNICAL APPROACH & GUARDRAILS
+A. Retrieval & Strategy Pipeline
+Multilingual Processing: Handles Hindi,
+English, and mixed-language queries, mapping
+them directly to underlying legal concepts.
+Cross-Referencing Engine: Links facts to
+specific sections across different statutes
+simultaneously to avoid missing claims.
+Precedent Search: Retrieves matching judicial
+rulings from indexed legal databases based on fact
+pattern similarities.
+B. Grounding & Veriﬁcation
+Deterministic Auditing: Every section, form,
+office, and deadline in the generated output is
+strictly validated against the knowledge base.
+Zero Hallucination Guarantee: Sentences
+that cannot be cited directly are removed. If data
+is missing, the system redirects to legal aid
+(DLSA).
+Session Privacy: Runs ephemerally without
+storing personal user information or case history.
+5. EXPECTED IMPACT & DELIVERY
+By giving citizens clear, verified first steps and complete procedural blueprints, the system levels the playing field for
+self-represented litigants. This directly supports SDG 16 (Peace, Justice, and Strong Institutions), SDG 5 (Gender
+Equality), and SDG 10 (Reduced Inequalities).
+Implementation Stack: Light React web app frontend, Spring Boot backend API, and a Python vector retrieval
+engine. Designed to run smoothly over slow network connections with sub-10-minute turnaround times.
+Abstract Problem Statement PS5 — Legal Tech Strategy Engine Page 1 of 1
+Know Your Rights in Ten Minutes: A Reliable Legal Guide
+Team Name:
+Chaos Engineers
+PS No.:
+5
+Domain:
+Social Impact & Women Safety

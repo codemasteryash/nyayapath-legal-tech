@@ -1,0 +1,573 @@
+{
+  "meta": {
+    "description": "Action-plan templates per issue category. Each step cites the provision or record that supports it, so a step with no verifiable basis is never shown.",
+    "deadlinePolicy": "A deadline appears only where it is stated in a source record we hold (for example the fifteen-day window in section 138 of the Negotiable Instruments Act, 1881, and the three-month window in section 6 of the Sexual Harassment of Women at Workplace Act, 2013). No other date is generated, and the workspace says so explicitly.",
+    "lastReviewed": "2026-10-18"
+  },
+  "templates": {
+    "domestic-violence": [
+      {
+        "order": 1,
+        "title": "If you are safe, do nothing else until you are safe",
+        "why": "Every other step on this list assumes there is no immediate risk. A protection order takes time to obtain; a call to 112 does not.",
+        "steps": "If anyone is injured or in danger now, call 112 and state your location and what is happening.",
+        "evidenceNeeded": "None — this is an immediate safety step.",
+        "authorityRefs": ["police-112"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Write down what happened, today, in date order",
+        "why": "This becomes the core of your application and of any police complaint. Memory of sequence and detail degrades quickly, and courts and police rely on dates.",
+        "steps": "One page per incident is enough. Give the date, what was said or done, who was present, and any injury. Do not include opinions about character.",
+        "evidenceNeeded": "Your own dated account.",
+        "authorityRefs": ["DVA-12", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Collect the evidence listed in your Evidence tab",
+        "why": "An application under section 12 is supported by documents, and the police ask for the same material. Screenshots, medical records and a proof of address do the most work.",
+        "steps": "Take screenshots with the sender's number visible. Get medical records from a doctor. Save the rent receipt or utility bill showing where you live.",
+        "evidenceNeeded": "See the Evidence tab for the full list, with where each item comes from.",
+        "authorityRefs": ["DVA-3", "DVA-27"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Approach the Protection Officer or the police",
+        "why": "Under the Act, information can be given to a Protection Officer as well as to the police, and the police have a statutory duty to act on a domestic violence complaint.",
+        "steps": "A Protection Officer may be appointed by the State for your district. Give a written complaint, ask for a copy, and note the diary number.",
+        "evidenceNeeded": "Your written account; identity proof if you have it.",
+        "authorityRefs": ["DVA-5", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "File an application under section 12 before the Magistrate",
+        "why": "Section 12 allows the aggrieved person, the Protection Officer, or any person acting on her behalf to present an application. It is a civil application and does not require a police complaint first.",
+        "steps": "Ask for the prescribed application form. You can ask for protection order, monetary relief, custody of children and compensation in the same application, and interim relief under section 23.",
+        "evidenceNeeded": "Address proof, your written account, supporting documents, copies for the number of parties.",
+        "authorityRefs": ["DVA-12", "DVA-18", "DVA-20", "DVA-21", "DVA-23", "DVA-27"],
+        "deadline": null
+      },
+      {
+        "order": 6,
+        "title": "If money is needed quickly, apply separately for maintenance",
+        "why": "Maintenance under the criminal procedure is a separate and often quicker route than a civil claim, and it does not depend on proving any offence.",
+        "steps": "Apply before a Judicial Magistrate of the First Class under section 145. A person with sufficient means who neglects to maintain a wife unable to maintain herself, or a minor child, or a parent unable to maintain themselves, may be ordered to pay a monthly allowance.",
+        "evidenceNeeded": "Proof of the relationship, proof of your means, and details of what the other person earns or owns.",
+        "authorityRefs": ["BNSS-145"],
+        "deadline": null
+      },
+      {
+        "order": 7,
+        "title": "Ask for a free lawyer through the Legal Services Authority",
+        "why": "Section 12(c) of the Legal Services Authorities Act, 1987 makes free legal services available to a woman in need of protection under any relevant law, independently of whether she can pay.",
+        "steps": "Apply at the Legal Services Cell in the district court complex, or through NALSA. Tell them you need protection under the Domestic Violence Act.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["LSA-12C"],
+        "deadline": null
+      }
+    ],
+    "harassment": [
+      {
+        "order": 1,
+        "title": "If you are in immediate danger, call 112 first",
+        "why": "Safety comes before documentation.",
+        "steps": "State your location, and describe the danger.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["police-112"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Stop contact in writing, once",
+        "why": "A written warning that the contact must stop establishes the boundary and, if the contact continues, becomes useful evidence of deliberate conduct.",
+        "steps": "Send one short message stating that the contact is unwelcome and must stop, and that any further contact will be reported. Send it once, do not repeat it, and keep a screenshot.",
+        "evidenceNeeded": "Screenshot of the warning and of any reply.",
+        "authorityRefs": ["BNS-78"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Preserve the record before anything is deleted",
+        "why": "Call logs, messages and profile details disappear when accounts are closed or devices are reset. The record you take today is often the only copy.",
+        "steps": "Screenshot each message and profile with the number or handle visible. Save call logs. Note dates and times in a separate list.",
+        "evidenceNeeded": "Screenshots, call logs, a written list of dates.",
+        "authorityRefs": ["BNS-351", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Write a complaint to the police station in writing and ask for a copy",
+        "why": "Section 173 of the criminal procedure requires that information relating to a cognizable offence be recorded, and that a copy be given to the informant free of cost, wherever the offence was committed.",
+        "steps": "Give it in writing at the station. Ask for the information to be entered in the book and for a copy. If the station refuses, section 173 also allows you to send the substance in writing by post to the Superintendent of Police concerned.",
+        "evidenceNeeded": "Your written complaint, the acknowledgment or copy, and the number of copies of your evidence.",
+        "authorityRefs": ["BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "Decide which offence to name",
+        "why": "The provision that fits depends on what actually happened: unwanted physical contact, sexual demands or lewd remarks, repeated unwanted contact, or a threat. Naming the right one makes the complaint stronger.",
+        "steps": "Physical contact or attempted contact to outrage modesty — section 74. Sexual demands, unwelcome advances, or lewd remarks — section 75. Repeated unwanted contact or monitoring — section 78. A threat of harm — section 351.",
+        "evidenceNeeded": "The screenshots and call logs that match the provision you are relying on.",
+        "authorityRefs": ["BNS-74", "BNS-75", "BNS-78", "BNS-351"],
+        "deadline": null
+      }
+    ],
+    "sexual-violence": [
+      {
+        "order": 1,
+        "title": "Get to a safe place and call 112",
+        "why": "Everything below assumes you are not in immediate danger.",
+        "steps": "If you can, go to a friend or relative, a hospital, or a shelter home. Call 112 and ask for a woman police officer where possible.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["police-112"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Ask for a medical examination",
+        "why": "Section 184 of the criminal procedure requires that a victim of rape be medically examined by a woman doctor in the presence of the woman or her attendant. The examination is time-sensitive, and a record of it strengthens everything that follows.",
+        "steps": "Go to a government or private hospital as soon as you are able. Ask for the examination to be recorded and for a copy of the record.",
+        "evidenceNeeded": "The medical examination record.",
+        "authorityRefs": ["BNSS-184"],
+        "deadline": "The examination is time-sensitive. We are not stating a specific number of days because our source records do not fix one — ask the hospital and the police station directly."
+      },
+      {
+        "order": 3,
+        "title": "Preserve what you were wearing, unwashed",
+        "why": "Clothing is evidence. Washing or discarding it removes material that cannot be recovered.",
+        "steps": "Put the clothing in a clean sealed bag and keep it safe. Do not wash it.",
+        "evidenceNeeded": "The sealed clothing.",
+        "authorityRefs": ["BNSS-176"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Report it at the police station and ask for a copy of the information",
+        "why": "Section 173 requires the information to be recorded and a copy to be given to the informant or victim free of cost. Where the offence alleged is against a woman under the listed BNS sections, the recording must be done by a woman police officer or woman officer.",
+        "steps": "Give the information orally or in writing. Ask for it to be reduced to writing, read over to you and signed. Ask for the copy.",
+        "evidenceNeeded": "The copy of the recorded information; your written account; medical records.",
+        "authorityRefs": ["BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "Ask for a free lawyer immediately",
+        "why": "Representation in a case of this kind should not wait for the case to progress.",
+        "steps": "Contact the Legal Services Cell at the district court complex, or NALSA. Tell them it is a case under the offences against woman in the criminal law.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["LSA-12C"],
+        "deadline": null
+      }
+    ],
+    "cyber": [
+      {
+        "order": 1,
+        "title": "If money is moving, call 1930 and your bank right now",
+        "why": "The National Cyber Crime Reporting Helpline exists to act on financial fraud while it is in progress. The bank can be asked to flag the beneficiary account.",
+        "steps": "Call 1930. Then call your bank's helpline and ask them to flag the beneficiary account and to note the complaint.",
+        "evidenceNeeded": "The transaction reference number and the bank statement.",
+        "authorityRefs": ["cyber-1930"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "File on the cybercrime portal and keep the reference number",
+        "why": "The portal gives you a reference number that you will need for the police, and it routes the complaint to the right cyber unit.",
+        "steps": "File at cybercrime.gov.in. Save the acknowledgement and the reference number.",
+        "evidenceNeeded": "Screenshots, transaction records, phone numbers.",
+        "authorityRefs": ["cyber-portal", "ITACT-43"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Complain to the platform's grievance officer and keep the ticket",
+        "why": "Section 69A of the Information Technology Act, 2000 obliges an intermediary, including an e-commerce entity, to observe due diligence and to provide a grievance redressal mechanism. A ticket number is proof that you did use it.",
+        "steps": "Use the grievance officer or in-app complaint route. Record the ticket number and the date of every escalation.",
+        "evidenceNeeded": "Ticket numbers, screenshots of the complaint and of the reply.",
+        "authorityRefs": ["ITACT-69", "cyber-portal"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Take a complete screenshot before you delete anything",
+        "why": "Once content is removed, the evidence of its existence usually goes with it. Capture the profile, the URL, the date and the content together.",
+        "steps": "Full-screen screenshots with the app bar visible. Note the URL. Note the date and time. Keep a written log of where the content appeared.",
+        "evidenceNeeded": "Screenshots with dates and URLs.",
+        "authorityRefs": ["ITACT-66E", "ITACT-67"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "Report at the police station with the portal reference",
+        "why": "The cyber unit may act on the complaint, but the station is where the information is recorded and where a copy is given to you.",
+        "steps": "Carry the portal acknowledgement, the screenshots and the bank records. Ask for the information to be recorded and for a copy.",
+        "evidenceNeeded": "Portal acknowledgement, screenshots, bank records.",
+        "authorityRefs": ["BNSS-173", "ITACT-43"],
+        "deadline": null
+      },
+      {
+        "order": 6,
+        "title": "If the content is a financial app or a bank service, complain to the regulator",
+        "why": "Section 69A empowers the Controller to give directions on interception, monitoring, preservation and decryption. A complaint to the regulator is separate from the police complaint.",
+        "steps": "For a bank or a payment service provider, complain to the Reserve Bank of India through its integrated ombudsman scheme, alongside the police complaint.",
+        "evidenceNeeded": "Transaction details and the bank's reference number.",
+        "authorityRefs": ["ITACT-69"],
+        "deadline": null
+      }
+    ],
+    "workplace-harassment": [
+      {
+        "order": 1,
+        "title": "Write to the Internal Committee first, in writing",
+        "why": "Section 6 of the Act requires the employer to constitute an Internal Committee, and a worker aggrieved by sexual harassment may make a complaint in writing to it. It is the statutory first route for workplace sexual harassment.",
+        "steps": "Address the complaint to the Presiding Officer of the Internal Committee. Ask for it to be registered and for the date to be recorded. Keep a copy and proof of delivery.",
+        "evidenceNeeded": "The written complaint and its acknowledgement.",
+        "authorityRefs": ["POSH-6", "POSH-3"],
+        "deadline": "Section 6 provides that the complaint may be made within three months of the incident. That window comes from the statute — confirm the current position with the Internal Committee, because the rule has been amended more than once."
+      },
+      {
+        "order": 2,
+        "title": "Check whether the Internal Committee actually exists",
+        "why": "If no Internal Committee has been constituted, the employer's obligation has not been met, and that fact is itself relevant to what you do next.",
+        "steps": "Ask the employer in writing who the Presiding Officer and members are. Section 3 also requires the penal consequences and the procedure to be displayed at the workplace — a poster you cannot find is a fact worth recording.",
+        "evidenceNeeded": "Your written request and the reply, or the absence of one.",
+        "authorityRefs": ["POSH-3"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Keep a separate log of every incident",
+        "why": "Pattern matters. A dated log of what happened, in the respondent's own words where possible, is more persuasive than a summary.",
+        "steps": "Date, time, place, what was said or done, who else was present. Do not exaggerate; do not leave anything out.",
+        "evidenceNeeded": "Your dated log; any witness details.",
+        "authorityRefs": ["POSH-6"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Where the conduct is also a criminal offence, report to the police",
+        "why": "The internal route does not take away the right to report an offence. Sexual demands, unwelcome physical contact and threats are offences in their own right.",
+        "steps": "Ask for the information to be recorded and for a copy. Where the offence alleged is against a woman under the listed BNS sections, the recording must be by a woman police officer or woman officer.",
+        "evidenceNeeded": "The copy of the recorded information; screenshots and witness details.",
+        "authorityRefs": ["BNS-75", "BNS-74", "BNS-351", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "If you are facing retaliation at work, record it as a separate fact",
+        "why": "Retaliation after a complaint is itself relevant, and it is easier to prove as a dated, specific event than as a general claim.",
+        "steps": "Note the date of each change in your duties, reporting line, transfer or appraisal, and keep the written record.",
+        "evidenceNeeded": "Emails, transfer or appraisal documents.",
+        "authorityRefs": ["POSH-6", "BNS-75"],
+        "deadline": null
+      }
+    ],
+    "dowry": [
+      {
+        "order": 1,
+        "title": "If there is any risk of violence, call 112",
+        "why": "Dowry demands accompanied by threats are treated as emergencies.",
+        "steps": "State the demand and the threat.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["police-112"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Write down every demand: what, who asked, when, in front of whom",
+        "why": "A demand that is described precisely is far easier to prove than one described generally, and the witness names matter.",
+        "steps": "One line per demand. Include items of property by name and any approximate value you know.",
+        "evidenceNeeded": "Your dated list; any recording of the demand itself.",
+        "authorityRefs": ["BNS-85", "BNS-86"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Report the offence at the police station and ask for a copy",
+        "why": "The offence of subjecting a woman to cruelty by a husband or his relative for the purpose of coercing an unlawful demand for dowry is a criminal offence, and the information must be recorded.",
+        "steps": "Give a written complaint. Ask for the information to be entered in the book and for a copy free of cost.",
+        "evidenceNeeded": "Written complaint, your account, medical records if there was harm.",
+        "authorityRefs": ["BNS-85", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "File a domestic violence application for protection and monetary relief",
+        "why": "Coercion to meet an unlawful demand for property is expressly within the statutory definition of domestic violence, so the civil remedy is available alongside the criminal one.",
+        "steps": "Ask for a protection order, monetary relief for expenses and losses, and custody where there are children.",
+        "evidenceNeeded": "Address proof, the demand list, medical records.",
+        "authorityRefs": ["DVA-3", "DVA-18", "DVA-20", "DVA-21"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "Apply for maintenance",
+        "why": "A person with sufficient means who neglects to maintain a wife unable to maintain herself, or a minor child, or a parent unable to maintain themselves, may be ordered to pay a monthly allowance.",
+        "steps": "Apply before a Judicial Magistrate of the First Class.",
+        "evidenceNeeded": "Proof of relationship and of your means.",
+        "authorityRefs": ["BNSS-145"],
+        "deadline": null
+      }
+    ],
+    "child-safety": [
+      {
+        "order": 1,
+        "title": "Report it — you are required to",
+        "why": "Section 19 of the Act requires any person who has apprehension that an offence is likely to be committed, or knowledge that one has been committed, to inform the Special Juvenile Police Unit or the local police. Section 21 punishes failure to report.",
+        "steps": "Report to the local police or the SJPU. In an emergency call 112 first. Tell the police what you observed, and do not investigate it yourself.",
+        "evidenceNeeded": "Your own written account of what you observed, in your own words.",
+        "authorityRefs": ["POCSO-19", "POCSO-21"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "If the child may still be at risk, say so explicitly to the police",
+        "why": "The Act requires the police to assess whether the child needs care and protection, and to report that assessment onwards. Saying so explicitly is what triggers that step.",
+        "steps": "State clearly whether the child is safe now and who the child is with.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["POCSO-19"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Do not question the child repeatedly",
+        "why": "Repeated questioning by a non-official can contaminate the account and retraumatise the child. The Act has detailed provisions for recording the child's statement by the police and the Magistrate.",
+        "steps": "Write down what you observed and hand it over. Let the police and the Magistrate record the child's statement.",
+        "evidenceNeeded": "Your observation, written down.",
+        "authorityRefs": ["POCSO-19"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Ask the police which Special Court will hear the matter",
+        "why": "Section 28 provides for the designation of Special Courts, and a Court of Session notified as a children's court is deemed to be one. Knowing the forum early avoids delay.",
+        "steps": "Ask for the name of the Special Court and the date of the first hearing.",
+        "evidenceNeeded": "The recorded information and its copy.",
+        "authorityRefs": ["POCSO-28", "POCSO-40"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "Seek legal help for the child",
+        "why": "Section 40 gives a child affected by an offence under the Act the right to be represented by a legal practitioner, and the child is entitled to free legal aid.",
+        "steps": "Contact the Legal Services Cell at the district court complex or NALSA.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["POCSO-40", "LSA-12C"],
+        "deadline": null
+      }
+    ],
+    "property": [
+      {
+        "order": 1,
+        "title": "Do not take possession, or change the locks, yourself",
+        "why": "Self-help in a property dispute is a quick way to convert a civil claim into a criminal case.",
+        "steps": "Stay out of it and use the process below.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": [],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Establish the paper trail on occupancy and payments",
+        "why": "In a possession dispute, proof of who lives there and who pays for it is what moves the case.",
+        "steps": "Collect the rent receipts, the utility bills and any written agreement. Photograph the premises with the date.",
+        "evidenceNeeded": "Agreement, receipts, utility bills, dated photographs.",
+        "authorityRefs": ["BNS-329"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "If the other person entered without permission, that is a different route",
+        "why": "Criminal trespass and house-trespass are offences, and the remedy is a complaint, not a civil suit.",
+        "steps": "Describe the entry precisely — when, how, whether armed, and what was intended. Report it at the station.",
+        "evidenceNeeded": "Your written complaint and supporting documents.",
+        "authorityRefs": ["BNS-329", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "If you were removed from a shared household, read section 17 of the Domestic Violence Act",
+        "why": "Section 17 gives a woman in a domestic relationship the right to reside in the shared household, whether or not she has any title or beneficial interest in it. That is a different argument from one based on title.",
+        "steps": "Consider an application under the Domestic Violence Act alongside any civil claim.",
+        "evidenceNeeded": "Proof of residence and of the domestic relationship.",
+        "authorityRefs": ["DVA-17", "DVA-19"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "File in the civil court with jurisdiction",
+        "why": "A suit for possession or for a declaration needs to be filed in the court that has territorial jurisdiction, and the limitation period applies.",
+        "steps": "Consult a lawyer or the legal services cell before filing, particularly if a limitation period may already be running.",
+        "evidenceNeeded": "See the Evidence tab.",
+        "authorityRefs": ["LSA-12C"],
+        "deadline": "We do not state a limitation period here, because our source records do not fix one for your facts. Get this confirmed before you rely on a date."
+      }
+    ],
+    "financial": [
+      {
+        "order": 1,
+        "title": "Find the bank-returned cheque memo",
+        "why": "The fact and date of return for a stated reason is the starting point of the offence under section 138 of the Negotiable Instruments Act, 1881.",
+        "steps": "Ask the bank for a copy of the returned cheque and the memo showing the date and reason of return.",
+        "evidenceNeeded": "The cheque and the bank-returned memo.",
+        "authorityRefs": ["NI-138"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Send the statutory written notice and keep proof of delivery",
+        "why": "Section 138 requires the payee to give a written notice to the drawer demanding payment. Without that notice the complaint does not proceed, and good cause must be shown within fifteen days of receipt.",
+        "steps": "Send it by registered post or speed post, or by a method that gives you proof of delivery. State the amount and demand payment. Keep the postal receipt and the tracking.",
+        "evidenceNeeded": "The notice with the postal receipt or other proof of delivery, and the date it was sent.",
+        "authorityRefs": ["NI-138"],
+        "deadline": "Fifteen days from receipt is the period within which the drawer must show good cause. This window is stated in the statute."
+      },
+      {
+        "order": 3,
+        "title": "If a recovery agent is involved, keep the notice and call 112",
+        "why": "Recovery pressure that crosses into threats is a police matter, and the notice the agent leaves is the evidence.",
+        "steps": "Do not pay on the spot to make it stop. Photograph or keep whatever the agent leaves or says, note the date and time, and report it.",
+        "evidenceNeeded": "The notice, photographs, the agent's details.",
+        "authorityRefs": ["BNSS-173", "BNS-351"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "If you signed as guarantor, read what you signed",
+        "why": "Signing a deed of hypothecation or a surety deed creates its own liability, separate from the borrower's. What you signed, and the terms of that document, decide what happens next.",
+        "steps": "Get a copy of the document you signed. Take advice before you sign anything further or transfer anything.",
+        "evidenceNeeded": "The deed or guarantee document, and the loan agreement.",
+        "authorityRefs": ["BNS-318", "LSA-12C"],
+        "deadline": null
+      }
+    ],
+    "consumer": [
+      {
+        "order": 1,
+        "title": "Complain to the company in writing first",
+        "why": "A consumer commission will look at what you did before you approached it. A written complaint to the seller and to the grievance officer is the expected first step.",
+        "steps": "Write to the seller and, if it is an online platform, to its grievance officer. Ask for the ticket number. Give the company the timeframe the E-commerce Rules, 2020 set for an acknowledgement and redressal.",
+        "evidenceNeeded": "Your complaint, the ticket number, the reply.",
+        "authorityRefs": ["CPA-2-11", "cyber-portal"],
+        "deadline": "We do not state a number of days here, because our source records do not fix one for your case. The E-commerce Rules, 2020 set periods for an e-commerce entity; check the current position."
+      },
+      {
+        "order": 2,
+        "title": "Work out whether this is deficiency or a defect, or both",
+        "why": "Section 2(11) defines deficiency as any fault, imperfection, shortcoming or inadequacy in the quality, nature and manner of performance. Saying which one you are alleging makes the complaint precise.",
+        "steps": "If the product is defective, say so and describe the defect. If the service was poor, say what was promised and what was done.",
+        "evidenceNeeded": "Photographs of the defect; the invoice; the warranty; the communications.",
+        "authorityRefs": ["CPA-2-11"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Pick the commission by the value of the claim",
+        "why": "A complaint about goods or services goes first to the District Commission. The State Commission's jurisdiction covers complaints where the value paid exceeds one crore rupees and does not exceed ten crore rupees.",
+        "steps": "File at the District Commission in your district, or online through e-Daakhil. If the seller is in another State, a transfer can be sought.",
+        "evidenceNeeded": "Invoice and payment proof; the warranty; the communications; the company's ticket number.",
+        "authorityRefs": ["CPA-35", "CPA-47", "CPA-62"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Use the National Consumer Helpline before you file",
+        "why": "It records your complaint against the company and gives you a reference, which is useful when the company refuses to respond.",
+        "steps": "Call 1915 or use the national consumer helpline portal, and keep the reference number.",
+        "evidenceNeeded": "The helpline reference number.",
+        "authorityRefs": ["ncpc"],
+        "deadline": null
+      }
+    ],
+    "liberty": [
+      {
+        "order": 1,
+        "title": "Call 112 and give the time, place and name of the person detained",
+        "why": "The most urgent fact in a detention matter is when and where it happened.",
+        "steps": "Report it. Give the last known location and any vehicle number.",
+        "evidenceNeeded": "Your own note of the time, place and circumstances.",
+        "authorityRefs": ["police-112"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Make sure the person is produced before a Magistrate",
+        "why": "Section 173 requires that the information be recorded, and the safeguards in a custodial matter include production before a Magistrate with the arrest particulars attested and countersigned.",
+        "steps": "Ask the station to produce the person and to give you a copy of the recorded information. If a person is not produced within the period allowed by law, keep a note of the dates.",
+        "evidenceNeeded": "The arrest memo or receipt; the copy of the recorded information.",
+        "authorityRefs": ["BNSS-173", "BNS-126"],
+        "deadline": "Our source records do not fix a single number of days for production in your circumstances. Ask the station and the Magistrate directly."
+      },
+      {
+        "order": 3,
+        "title": "Where a person cannot be traced, consider a habeas corpus petition",
+        "why": "A petition for habeas corpus may be made to the concerned High Court where a person is detained without the authority of law, or is not produced before a Magistrate.",
+        "steps": "A habeas corpus petition is a serious step and is best filed with a lawyer. Ask the Legal Services Cell at the High Court or the district court complex.",
+        "evidenceNeeded": "Everything in the Evidence tab, plus a dated account of the search you have made.",
+        "authorityRefs": ["BNS-126", "BNSS-127", "LSA-12C"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Keep a single dated chronology",
+        "why": "A chronology with exact times is the single most useful document in a detention or restraint matter.",
+        "steps": "Time, place, who, what was said or done, who was present. Keep it factual.",
+        "evidenceNeeded": "The chronology.",
+        "authorityRefs": ["BNSS-173"],
+        "deadline": null
+      }
+    ],
+    "civil-other": [
+      {
+        "order": 1,
+        "title": "Establish the contract, and your performance of it",
+        "why": "In a contract or damages dispute, what the agreement required and what each side actually did is the whole case.",
+        "steps": "Find the written agreement. Assemble proof of what you did — payments, deliveries, performance.",
+        "evidenceNeeded": "Agreement; payment or performance proof; communications.",
+        "authorityRefs": ["BNS-318"],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Decide what remedy you actually want",
+        "why": "Money, return of property, an order to do something, or an order to stop something are different suits with different forums.",
+        "steps": "Write one sentence stating the outcome you want. A lawyer can advise on whether that is the right remedy.",
+        "evidenceNeeded": "None.",
+        "authorityRefs": ["LSA-12C"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "Send a notice before you file, where a contract allows it",
+        "why": "A contractual notice step is often a precondition to filing, and sending one is cheap.",
+        "steps": "Check whether the agreement requires a notice, and what period it must allow for a reply. Send it by a method that gives proof.",
+        "evidenceNeeded": "The agreement; the notice; proof of delivery.",
+        "authorityRefs": ["BNS-318"],
+        "deadline": "Any period comes from your contract. We are not generating one."
+      },
+      {
+        "order": 4,
+        "title": "Check whether a consumer forum is the right route",
+        "why": "If what you are complaining about is a deficiency of service or a defect in goods, the consumer legislation may be the proper forum, and an ordinary civil suit may be barred to that extent.",
+        "steps": "If it is a service or goods problem, consider the District Commission instead.",
+        "evidenceNeeded": "Invoice; communications; proof of the deficiency.",
+        "authorityRefs": ["CPA-2-11", "CPA-35"],
+        "deadline": null
+      },
+      {
+        "order": 5,
+        "title": "Consult a lawyer or the legal services cell before filing",
+        "why": "Limitation and jurisdiction are decided at the stage of filing, and getting either wrong can defeat a claim that is otherwise good.",
+        "steps": "The Legal Services Cell at the district court complex provides free legal advice.",
+        "evidenceNeeded": "See the Evidence tab.",
+        "authorityRefs": ["LSA-12C"],
+        "deadline": "We do not state a limitation period, because our source records do not fix one for your facts and a wrong date is worse than none."
+      }
+    ]
+  }
+}

@@ -1,0 +1,413 @@
+{
+  "meta": {
+    "description": "Issue taxonomy, cue lexicon (English + Hindi), follow-up question banks, evidence checklists and action-plan templates. Kept separate from application logic so the set can be extended.",
+    "lastReviewed": "2026-10-18",
+    "evidenceNote": "Every evidence item is a document or record that a person can ordinarily obtain or create. Where a listed item depends on a police station, hospital, bank or employer, the workspace states that explicitly rather than assuming it is available."
+  },
+  "categories": [
+    {
+      "id": "domestic-violence",
+      "label": "Domestic violence / abuse at home",
+      "labelHi": "घरेलू हिंसा",
+      "blurb": "Physical, sexual, verbal, emotional or economic abuse by a husband, partner, or relative.",
+      "keywords": ["husband", "wife", "spouse", "married", "marriage", "matrimonial", "in-laws", "in laws", "mother in law", "family", "home", "beat", "beating", "hit", "punch", "abuse", "violence", "threat", "kicked", "pushed", "dowry", "dhan", "ghar", "pati", "poti", "saas", "bahu", "marr", "mara", "peet", "dhamki", "maryada", "chhed", "ghoda", "paisa", "kripan"],
+      "defaultProvisionIds": ["DVA-3", "DVA-12", "DVA-18", "DVA-20", "BNS-85", "BNSS-145"],
+      "forum": "Judicial Magistrate of the First Class / Metropolitan Magistrate (Domestic Violence Act, 2005)",
+      "emergency": "If there is a risk to life or limb, call the police emergency number 112 first, then consider a protection order."
+    },
+    {
+      "id": "harassment",
+      "label": "Harassment or molestation",
+      "labelHi": "उत्पीड़न / मॉडेस्टी का उल्लंघन",
+      "blurb": "Unwanted physical contact, sexual demands, lewd comments, stalking or threats.",
+      "keywords": ["harass", "harassment", "follow", "following", "stalk", "stalking", "touch", "touched", "groped", "molest", "comments", "remarks", "lewd", "threat", "threaten", "roaming", "phone", "calls", "utp", "unwanted", "chhed", "ghoorna", "stalk", "phone", "dhamki", "galij", "tang", " pareshan", " pareshan"],
+      "defaultProvisionIds": ["BNS-74", "BNS-75", "BNS-78", "BNS-79", "BNS-351", "BNSS-173"],
+      "forum": "Police station (for a cognizable offence) or the Magistrate (for a complaint under the Bharatiya Nagarik Suraksha Sanhita)",
+      "emergency": "If you are in immediate danger, call 112."
+    },
+    {
+      "id": "sexual-violence",
+      "label": "Sexual violence",
+      "labelHi": "यौन हिंसा",
+      "blurb": "Rape, attempted rape, molestation with force, or non-consensual sexual contact.",
+      "keywords": ["rape", "raped", "gang", "forced", "force", "sexual", "sex", "assault", "intercourse", "consent", "drugged", "sedate", "unconscious", "molest", "raped", "balatkaar", "balakaar", "sambhog", "sex", "zor", "drog"],
+      "defaultProvisionIds": ["BNS-63", "BNS-64", "BNS-76", "BNS-74", "BNSS-184"],
+      "forum": "Police station; the medical examination and the FIR are the immediate priorities.",
+      "emergency": "Call 112. Ask for a woman police officer where one is available."
+    },
+    {
+      "id": "cyber",
+      "label": "Cybercrime and online abuse",
+      "labelHi": "साइबर अपराध",
+      "blurb": "Fraud, non-consensual imagery, harassment online, threats over messages, or misuse of personal data.",
+      "keywords": ["cyber", "online", "internet", "whatsapp", "instagram", "facebook", "phone", "mobile", "sms", "email", "fraud", "scam", "otp", "payment", "money transfer", "upi", "bank", "account", "videos", "photos", "viral", "leak", "blackmail", "morph", "fake", "impersonation", "cyber", "online", "net", "videsh", "paisa", "dhokha", "photo", "video", "blakmail", "dhamki"],
+      "defaultProvisionIds": ["ITACT-43", "ITACT-66E", "ITACT-66F", "ITACT-67", "BNSS-173"],
+      "forum": "Police station (including the cyber crime unit where one exists) or the nearest Cyber Crime Reporting Portal.",
+      "emergency": "For an active financial fraud, call 1930 (National Cyber Crime Reporting Helpline) as well as your bank."
+    },
+    {
+      "id": "workplace-harassment",
+      "label": "Workplace harassment",
+      "labelHi": "कार्यस्थल पर उत्पीड़न",
+      "blurb": "Harassment by a colleague, manager or employer at the place of work.",
+      "keywords": ["office", "work", "workplace", "job", "employer", "manager", "boss", "colleague", "staff", "team", "overtime", "transfer", "targets", "kantor", "office", "kaam", "naukri", "boss", "sehkar", "upkaran", "pichhanda"],
+      "defaultProvisionIds": ["POSH-3", "POSH-6", "BNS-75", "BNSS-173"],
+      "forum": "Internal Committee at the workplace first; police where the conduct amounts to a cognizable offence.",
+      "emergency": "The internal route is the statutory first step, but it does not stop you from reporting an offence to the police."
+    },
+    {
+      "id": "dowry",
+      "label": "Dowry harassment or dowry death",
+      "labelHi": "दहेज उत्पीड़न",
+      "blurb": "Demands for dowry or property, or abuse connected with such a demand.",
+      "keywords": ["dowry", "dowry death", "dhan", "demand", "property", "jewellery", "jewelry", "money", "gift", "car", "shaadi", "marriage demands", "dhan", "mang", "sone", "heirani", "gehna", "jagah", "ghar"],
+      "defaultProvisionIds": ["BNS-85", "BNS-86", "DVA-3", "DVA-20", "BNSS-145"],
+      "forum": "Police station for the offence; Magistrate for a domestic violence application and for maintenance.",
+      "emergency": "If a demand is accompanied by threats of violence, treat it as an emergency and call 112."
+    },
+    {
+      "id": "child-safety",
+      "label": "Child safety",
+      "labelHi": "बाल सुरक्षा",
+      "blurb": "Physical or sexual harm to a child, or a duty to report one.",
+      "keywords": ["child", "children", "minor", "girl", "boy", "school", "teacher", "bacha", "bachi", "bacha", "school", "padhai", "teacher", "safai", "laund", "help", "buddha"],
+      "defaultProvisionIds": ["POCSO-19", "POCSO-21", "POCSO-28", "POCSO-40"],
+      "forum": "Special Juvenile Police Unit or the local police; the report to the Child Welfare Committee follows from there.",
+      "emergency": "Call 112 or the childline. Reporting is a legal duty on every adult who knows of the offence."
+    },
+    {
+      "id": "property",
+      "label": "Property or housing dispute",
+      "labelHi": "संपत्ति विवाद",
+      "blurb": "Eviction, trespass, a dispute over a flat, or an unlawful claim over another's property.",
+      "keywords": ["property", "flat", "house", "home", "land", "evict", "eviction", "possession", "rent", "tenant", "landlord", "boundary", "dispute", "illegal", "makaan", "ghar", "zameen", "rehni", "khatana", "pariwad", "illegal"],
+      "defaultProvisionIds": ["BNS-329", "BNS-315", "BNS-351", "DVA-17"],
+      "forum": "Civil court (a rent or possession matter) or the Magistrate (trespass), depending on the claim.",
+      "emergency": "Do not attempt to take possession yourself; that can convert a civil dispute into a criminal one."
+    },
+    {
+      "id": "financial",
+      "label": "Money, loan or recovery",
+      "labelHi": "वित्तीय विवाद",
+      "blurb": "A bounced cheque, a loan dispute, or recovery pressure including from a guarantor.",
+      "keywords": ["loan", "cheque", "bounced", "dishonour", "emi", "repay", "repayment", "debt", "guarantor", "bank", "recovery", "money", "lena", "udhaar", "chitthi", "cheque", "bank", "rashi", "guarantee", "hypothecation"],
+      "defaultProvisionIds": ["NI-138", "BNS-318", "CPA-2-11", "CPA-35"],
+      "forum": "Magistrate for a dishonoured cheque; civil court or consumer forum depending on the claim.",
+      "emergency": "If a recovery agent is threatening you, call 112 and keep the notice."
+    },
+    {
+      "id": "consumer",
+      "label": "Consumer or service complaint",
+      "labelHi": "उपभोक्ता शिकायत",
+      "blurb": "A defective product, a deficient service, or a dispute with an online seller.",
+      "keywords": ["consumer", "product", "service", "defective", "warranty", "refund", "replacement", "seller", "company", "app", "website", "not delivered", "poor service", "defect", "upbhokta", "kharid", "defect", "warranty", "paisa wapas", "service", "dukan"],
+      "defaultProvisionIds": ["CPA-2-11", "CPA-35", "CPA-47", "CPA-62"],
+      "forum": "District / State / National Consumer Disputes Redressal Commission.",
+      "emergency": "Keep the invoice and every communication with the seller; the consumer route depends on them."
+    },
+    {
+      "id": "liberty",
+      "label": "Detention, restraint or being confined",
+      "labelHi": "अभीरोध / हिरासत",
+      "blurb": "Being held, prevented from leaving, or a relative who has been taken away.",
+      "keywords": ["detained", "detention", "confined", "confine", "held", "locked", "kidnapped", "abducted", "arrested", "detention", "captive", "qaid", "banda", "bandi", "hira", "pakda", "ghera"],
+      "defaultProvisionIds": ["BNS-126", "BNS-127", "BNSS-173", "BNSS-184"],
+      "forum": "Police station; a habeas corpus petition may be filed before the concerned High Court.",
+      "emergency": "Call 112 immediately and note the time and place of arrest."
+    },
+    {
+      "id": "civil-other",
+      "label": "Other civil matter",
+      "labelHi": "अन्य दीवानी मामला",
+      "blurb": "A dispute that does not fit the categories above.",
+      "keywords": ["civil", "suit", "contract", "agreement", "breach", "damages", "debt", "recovery", "property", "partnership", "divorce", "family", "dawai", "agreement", "naka", "case"],
+      "defaultProvisionIds": ["BNS-318", "CPA-2-11"],
+      "forum": "Civil court in the appropriate jurisdiction.",
+      "emergency": "If violence or a threat of violence is involved, report that separately to the police."
+    }
+  ],
+  "dateCues": [
+    { "pattern": "\\b(\\d{1,2})\\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\s+(\\d{4})\\b", "hint": "Indian date format (day month year)" },
+    { "pattern": "\\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\s+(\\d{1,2}),?\\s+(\\d{4})\\b", "hint": "Month day, year" },
+    { "pattern": "\\b(\\d{1,2})[\\s\\-/](january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\\s\\-/]((\\d{2}|\\d{4}))\\b", "hint": "Numeric date" },
+    { "pattern": "\\b(today|yesterday|tomorrow|आज|कल|परसों)\\b", "hint": "Relative day" },
+    { "pattern": "\\b(last|this|past|pichhle)\\s+(week|month|year)\\b", "hint": "Relative period" },
+    { "pattern": "\\b(\\d{1,2})\\s*(साल|महीने|महीना|दिन)\\s*(पहले|पूर्व)\\b", "hint": "Hindi relative period" },
+    { "pattern": "\\b(\\d{4})\\b", "hint": "Year — verify what the year refers to" }
+  ],
+  "evidenceLibrary": {
+    "domestic-violence": [
+      { "item": "Any written message, SMS or call record that shows the abuse or the demand", "source": "your own phone", "held": false },
+      { "item": "Medical records and prescriptions for injuries, or for anxiety and sleep problems", "source": "a doctor or hospital", "held": false },
+      { "item": "Photographs of injuries, or of damage in the house", "source": "take them early, with the date visible if possible", "held": false },
+      { "item": "Names and contact details of witnesses — neighbours, relatives, colleagues, domestic help", "source": "your own knowledge", "held": false },
+      { "item": "Marriage invitation, or any document that shows the date and place of the marriage", "source": "your own papers", "held": false },
+      { "item": "Proof of residence in the shared household — rent receipt, electricity bill, address proof, or a letter addressed to you at that address", "source": "landlord or utility provider", "held": false },
+      { "item": "A written statement of what happened, in date order", "source": "write it yourself today", "held": false }
+    ],
+    "harassment": [
+      { "item": "Screenshots of the messages or comments, with the sender's number or profile visible", "source": "your own phone", "held": false },
+      { "item": "Call logs showing repeated calls at particular times", "source": "your phone records", "held": false },
+      { "item": "Photographs or video, if taken without risk to your safety", "source": "your own device", "held": false },
+      { "item": "Names of people who witnessed the incident", "source": "your own knowledge", "held": false },
+      { "item": "Medical record, if you were touched or assaulted", "source": "a doctor or hospital", "held": false }
+    ],
+    "sexual-violence": [
+      { "item": "A written account of the incident, written down as soon as you are able", "source": "yourself", "held": false },
+      { "item": "Medical examination record — request this early, since the examination is time-sensitive", "source": "a government or private hospital", "held": false },
+      { "item": "Preserve the clothes you were wearing on that day, unwashed, in a sealed bag", "source": "yourself", "held": false },
+      { "item": "Any messages, call logs or location history from that period", "source": "your own phone", "held": false },
+      { "item": "Names and contact details of anyone who knows where you were and what happened", "source": "your own knowledge", "held": false }
+    ],
+    "cyber": [
+      { "item": "Screenshots of every relevant message, post or profile, with the URL and date visible", "source": "your own device", "held": false },
+      { "item": "The transaction record, UPI reference number or bank statement for any money you lost", "source": "your bank", "held": false },
+      { "item": "The call recording, if you have one, and the caller's number", "source": "your own phone", "held": false },
+      { "item": "The complaint reference or ticket number from the platform's grievance officer", "source": "the platform", "held": false },
+      { "item": "A written note of every step you took and when you took it", "source": "write it yourself today", "held": false }
+    ],
+    "workplace-harassment": [
+      { "item": "A written complaint to the Internal Committee or the employer, and its acknowledgement", "source": "you and the employer", "held": false },
+      { "item": "Copies of any email, message or work instruction that relates to the harassment", "source": "your own device or work account", "held": false },
+      { "item": "Your appointment letter and any document describing the reporting structure", "source": "your employer", "held": false },
+      { "item": "Attendance or leave records for the dates of the incidents", "source": "your employer", "held": false },
+      { "item": "Names of colleagues who witnessed the conduct", "source": "your own knowledge", "held": false }
+    ],
+    "dowry": [
+      { "item": "A written list of every demand made, by whom, when, and in what form", "source": "write it yourself today", "held": false },
+      { "item": "Screenshots or recordings of the demand itself", "source": "your own phone", "held": false },
+      { "item": "Records of any property given or demanded — receipts, gift notes, bank transfers, list of items", "source": "your own papers and bank", "held": false },
+      { "item": "Medical records if there was any physical harm", "source": "a doctor or hospital", "held": false },
+      { "item": "Names of witnesses to the demand", "source": "your own knowledge", "held": false }
+    ],
+    "child-safety": [
+      { "item": "A written account of what you observed or were told, in your own words", "source": "yourself", "held": false },
+      { "item": "The date, place and description of what happened, as precisely as you can recall", "source": "your memory — write it now", "held": false },
+      { "item": "The child's account, if the child chooses to give one", "source": "the child", "held": false },
+      { "item": "Any earlier report you made to a school, an institution or the police", "source": "the institution", "held": false },
+      { "item": "Medical records for the child", "source": "a hospital", "held": false }
+    ],
+    "property": [
+      { "item": "The agreement, rent receipt or lease, if one exists", "source": "your own papers", "held": false },
+      { "item": "Electricity or water bills showing who occupies the premises", "source": "the utility provider", "held": false },
+      { "item": "Photographs of the premises taken with the date", "source": "your own device", "held": false },
+      { "item": "Any written notice, letter or message from the other party", "source": "your own papers", "held": false },
+      { "item": "Any report you made to the police or to the local authority", "source": "your own papers", "held": false }
+    ],
+    "financial": [
+      { "item": "The cheque itself, and the bank-returned memo with the date of return", "source": "your bank", "held": false },
+      { "item": "Proof that you sent the written notice, and the date you sent it", "source": "registered post or speed post receipt", "held": false },
+      { "item": "The loan agreement or the surety deed, if you signed one", "source": "the lender", "held": false },
+      { "item": "All repayment records", "source": "your bank", "held": false },
+      { "item": "Any notice received from the lender or a recovery agent", "source": "your own papers", "held": false }
+    ],
+    "consumer": [
+      { "item": "The invoice or bill", "source": "the seller", "held": false },
+      { "item": "The warranty or guarantee card", "source": "the seller", "held": false },
+      { "item": "Photographs of the defect", "source": "your own device", "held": false },
+      { "item": "Every email, chat or call record with the seller about the complaint", "source": "your own device", "held": false },
+      { "item": "The complaint reference from the company's grievance officer", "source": "the company", "held": false }
+    ],
+    "liberty": [
+      { "item": "The time and place of arrest or detention, and who reported it", "source": "your own record", "held": false },
+      { "item": "The arrest memo or any document produced on release", "source": "the police station", "held": false },
+      { "item": "Hospital records, if there was an injury", "source": "a hospital", "held": false },
+      { "item": "The names of anyone who saw the arrest", "source": "your own knowledge", "held": false },
+      { "item": "Any application you filed before a Magistrate or a High Court", "source": "your own papers", "held": false }
+    ],
+    "civil-other": [
+      { "item": "The agreement or contract in writing, if there is one", "source": "your own papers", "held": false },
+      { "item": "Proof of payment, or of performance of your side of the contract", "source": "your bank or records", "held": false },
+      { "item": "Every communication with the other party", "source": "your own device", "held": false },
+      { "item": "Names of witnesses", "source": "your own knowledge", "held": false }
+    ]
+  },
+  "followUps": {
+    "domestic-violence": [
+      "Is there a risk of violence right now, and where would you go tonight if it happened?",
+      "Are you living in a shared household with the respondent, and do you have proof of that address?",
+      "Did you inform the police or a Protection Officer? If so, is there a diary number?",
+      "Are there children in the household, and who currently looks after them day to day?",
+      "Is there any financial dependence — a bank account, income or property in your name?",
+      "Has anything been demanded in connection with marriage or property, and was it in writing?"
+    ],
+    "harassment": [
+      "Are the contacts coming from one number or from many?",
+      "Has the person been warned once, in writing, that the contact must stop?",
+      "Is the person a stranger, an acquaintance, a colleague, or a neighbour?",
+      "Do you live or work in the same building or locality as the person?",
+      "Has any physical contact happened, and do you have a medical record?"
+    ],
+    "sexual-violence": [
+      "When was the last time it happened, and has anything happened since?",
+      "Has a medical examination been done? If not, how long ago was the incident?",
+      "Were you drinking, or were you given anything without your knowledge?",
+      "Do you know the full name or description of the person, and can you describe them?",
+      "Is there someone you trust who can be present with you while you go to the police station?"
+    ],
+    "cyber": [
+      "Do you know the account name or the number the messages came from?",
+      "Has any money actually moved, and has the bank been informed?",
+      "Were any images or videos circulated — who has seen them, and do you know?",
+      "Have you already complained to the platform, and do you have a ticket number?",
+      "Is there an immediate risk — for example, a threat to disclose something if you do not pay?"
+    ],
+    "workplace-harassment": [
+      "Does your workplace have an Internal Committee, and do you know its members?",
+      "How long ago did the most recent incident occur?",
+      "Have you put the complaint in writing, and do you have a copy?",
+      "Does the respondent have any reporting authority over you?",
+      "Is your job or any condition of it dependent on the respondent's approval?"
+    ],
+    "dowry": [
+      "Was the demand made before or after the marriage?",
+      "Was any demand made in writing, or in front of witnesses?",
+      "Has any property already been given, and is there a list or record of it?",
+      "Is there any injury or medical record from an incident connected with the demand?",
+      "Who else in the household was present when the demand was made?"
+    ],
+    "child-safety": [
+      "What is the child's age, and what is the relationship to you?",
+      "What exactly did you see or hear, and when was the last time?",
+      "Has anyone else been told — a teacher, a doctor, a relative?",
+      "Is the child currently safe, and who is the child with now?",
+      "Do you know the name of the person the child has described?"
+    ],
+    "property": [
+      "Do you have a written agreement, or is it entirely oral?",
+      "Who pays the rent or the utilities, and are they in your name?",
+      "Has any notice been served on you, and by what date must you respond?",
+      "Is there a police complaint already on record about this property?",
+      "Is the dispute with a person living in the premises, or about the right to the property?"
+    ],
+    "financial": [
+      "Was the cheque returned for insufficiency of funds, and when was it returned?",
+      "Did you send a written notice, and was it delivered?",
+      "What is the amount of the cheque and the debt it was for?",
+      "Did you sign any document as a guarantor or on a hypothecation deed?",
+      "Has the lender issued a demand notice, and when?"
+    ],
+    "consumer": [
+      "What did you pay, and what exactly did the seller promise?",
+      "Is the goods defective, or is the service deficient — or both?",
+      "Have you complained to the seller or to the company's grievance officer, and when?",
+      "How long ago did you buy it, or when did the service fail?",
+      "Are you filing for yourself, or on behalf of a group?"
+    ],
+    "liberty": [
+      "When was the person taken, by whom, and from where?",
+      "Was any arrest memo or receipt given?",
+      "Has the person been produced before a Magistrate, and if so, when?",
+      "Is there a place of last known residence or work?",
+      "Is there any risk to life, and is anyone dependent on that person?"
+    ],
+    "civil-other": [
+      "Is there a written contract or agreement?",
+      "What remedy are you actually looking for — payment, return of property, or an order?",
+      "Has any limitation period notice been received, or any demand letter?",
+      "Has the other party responded to any written notice from you?",
+      "Is there a parallel proceeding already on foot anywhere?"
+    ]
+  },
+  "referralChannels": [
+    {
+      "id": "police-112",
+      "name": "Police emergency number",
+      "value": "112",
+      "when": "Immediate danger to life, liberty or personal safety, including domestic violence in progress.",
+      "note": "Works from any phone in India, including without a SIM, on supported networks.",
+      "sourceUrl": "https://digitalindia.gov.in/en/important-links/emergency-numbers",
+      "verified": true
+    },
+    {
+      "id": "cyber-1930",
+      "name": "National Cyber Crime Reporting Helpline",
+      "value": "1930",
+      "when": "Online financial fraud, or a cybercrime in progress. Available 24 hours.",
+      "note": "Call the helpline and also file on the cybercrime portal, because the portal generates a reference number you will need.",
+      "sourceUrl": "https://cybercrime.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "cyber-portal",
+      "name": "National Cybercrime Reporting Portal",
+      "value": "cybercrime.gov.in",
+      "when": "Any cybercrime, including non-consensual imagery, online threats and fraud.",
+      "note": "File here to obtain an acknowledgement and a reference number, then report at the police station.",
+      "sourceUrl": "https://cybercrime.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "nalsa",
+      "name": "National Legal Services Authority",
+      "value": "nalsa.gov.in",
+      "when": "You need a free lawyer, or you need to reach the Legal Services Authority in your state.",
+      "note": "NALSA coordinates the District Legal Services Authorities. Free legal aid is available to women and children in need of protection under section 12(c) of the Legal Services Authorities Act, 1987.",
+      "sourceUrl": "https://nalsa.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "dlsa",
+      "name": "District Legal Services Authority",
+      "value": "Your district court complex",
+      "when": "You appear in person and need a lawyer appointed for you.",
+      "note": "Every district has a DLSA with a legal services clinic and a lok adalat system. Ask the court clerk for the Legal Services Cell.",
+      "sourceUrl": "https://nalsa.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "nalSA-tollfree",
+      "name": "NALSA helpline",
+      "value": "15128",
+      "when": "General guidance on obtaining legal aid.",
+      "note": "Availability may vary by state; confirm on the NALSA website before relying on it.",
+      "sourceUrl": "https://nalsa.gov.in/",
+      "verified": false
+    },
+    {
+      "id": "women-helpline",
+      "name": "Women helpline",
+      "value": "181",
+      "when": "A woman needs support relating to violence, harassment or safety.",
+      "note": "A support and referral service operated by the states; it is not a substitute for the police in an emergency.",
+      "sourceUrl": "https://wcd.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "childline",
+      "name": "Childline",
+      "value": "1098",
+      "when": "A child is at risk or needs protection.",
+      "note": "For an emergency call 112 first.",
+      "sourceUrl": "https://ncpcr.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "ncw",
+      "name": "National Commission for Women",
+      "value": "ncw.gov.in",
+      "when": "You need to lodge a complaint about a violation of a woman's rights, or need guidance.",
+      "note": "The NCW can take up certain matters, but it is not a substitute for a complaint to the police or a court.",
+      "sourceUrl": "https://ncw.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "ncpc",
+      "name": "National Consumer Helpline",
+      "value": "1915",
+      "when": "A consumer complaint that has not been resolved by the company.",
+      "note": "A precursor to filing before a Consumer Disputes Redressal Commission; keep the company's reference number.",
+      "sourceUrl": "https://consumeraffairs.gov.in/",
+      "verified": true
+    },
+    {
+      "id": "edupal",
+      "name": "e-Daakhil, National Consumer Disputes Redressal Commission",
+      "value": "edaakhil.nic.in",
+      "when": "Filing a consumer complaint online.",
+      "note": "A complaint can also be filed in person at the District Commission.",
+      "sourceUrl": "https://edaakhil.nic.in/",
+      "verified": true
+    }
+  ]
+}

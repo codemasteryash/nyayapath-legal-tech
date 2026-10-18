@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "description": "Seeded demo cases. These are fictional composites written for demonstration. They are not real people and no real case is described.",
+    "lastReviewed": "2026-10-18"
+  },
+  "sampleCases": [
+    {
+      "id": "sample-hinglish-domestic",
+      "badge": "Recommended for the demo",
+      "badgeTone": "brass",
+      "title": "Domestic violence, restraint and threats over property",
+      "category": "domestic-violence",
+      "language": "hinglish",
+      "location": "Jaipur, Rajasthan",
+      "startDate": "2026-04-12",
+      "narrative": "My husband and I have been married for 8 years and we live in a rented flat in Jaipur with our 7 year old daughter. Since March 2026 he has started coming home late and accusing me of not respecting him. On 12 April 2026 he held my hand so hard that there was a mark and I had to see a doctor at SMS Hospital. On 3 May 2026 he took my phone and deleted my photos and said that if I tell anyone he will throw me out of the house. On 21 May 2026 he refused to give me money for my daughter's medicine even though his salary is deposited in our joint account. My mother-in-law told me last week to leave her son's house. I have a bank account in my own name but the rent is paid from my husband's account. My mother lives in Sikar and she is willing to support me. I am scared he will hurt me if I file anything. Please tell me what I can do.",
+      "extractedDates": ["12 April 2026", "3 May 2026", "21 May 2026"],
+      "expectedSignals": ["domestic-violence", "harassment"]
+    },
+    {
+      "id": "sample-hindi-domestic",
+      "badge": "Hindi narrative",
+      "badgeTone": "sage",
+      "title": "दहेज की मांग और मारपीट की शिकायत",
+      "category": "dowry",
+      "language": "hi",
+      "location": "Lucknow, Uttar Pradesh",
+      "startDate": "2025-11-02",
+      "narrative": "मेरी उम्र 26 साल है और शादी 2023 में हुई थी। 2 नवंबर 2025 को ससुराल के लोगों ने कहा कि मेरे पिता से दस लाख रुपये और एक सोना की चेन लाना होगा वरना घर से निकाल देंगे। 18 नवंबर 2025 को पति ने मुझे धक्का देकर गिरा दिया और मेरी बाईं आँख के नीचे चोट आ गई। मैंने तुरंत नजदीकी सरकारी अस्पताल में जांच कराई और रिपोर्ट मिल गई। पति के पास अच्छी नौकरी है और उसकी सालाना आमदनी लगभग बारह लाख रुपये है। मेरे पास कोई खास कागज नहीं है, बस अस्पताल की रिपोर्ट है और एक व्हाट्सएप संदेश जिसमें वो दस लाख की मांग लिखी है। मेरी माँ इलाहाबाद से आने के लिए तैयार है। मुझे डर है कि अगर मैंने शिकायत की तो मुझे घर से निकाल दिया जाएगा। मुझे क्या करना चाहिए?",
+      "extractedDates": ["2 नवंबर 2025", "18 नवंबर 2025"],
+      "expectedSignals": ["dowry", "domestic-violence"]
+    },
+    {
+      "id": "sample-cyber-fraud",
+      "badge": "Cybercrime",
+      "badgeTone": "sage",
+      "title": "Online fraud and threatening messages",
+      "category": "cyber",
+      "language": "en",
+      "location": "Hyderabad, Telangana",
+      "startDate": "2026-09-28",
+      "narrative": "On 28 September 2026 I received an SMS claiming to be from HDFC Bank saying my account would be blocked and asking me to click a link and enter my OTP. I clicked it and entered the OTP. Within ten minutes Rs 85000 left my account. I called my bank the same day and they asked me to file a complaint with the police. I have the SMS, the screenshot of the transaction and my bank statement. After the fraud, the same number started calling me and the person said that if I go to the police they will publish my home address online. The caller also said they know where I live. The number is +91 8XXXXXXXXX. I have taken screenshots of every call detail. My family is frightened. I do not know who this person is.",
+      "extractedDates": ["28 September 2026"],
+      "expectedSignals": ["cyber"]
+    }
+  ]
+}
