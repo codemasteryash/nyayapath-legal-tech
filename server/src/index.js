@@ -1,6 +1,24 @@
 import cors from "cors";
 import express from "express";
 import multer from "multer";
+import path from "node:path";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+// Load server/.env before anything reads process.env. Built into Node 22, so
+// this adds no dependency. Values already present in the environment win, which
+// means CI and a shell override always take precedence over the file.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(__dirname, "..", ".env");
+if (existsSync(envPath) && typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile(envPath);
+  } catch (err) {
+    console.warn(
+      `  Could not read ${envPath}: ${err.message}. Continuing with the current environment.`,
+    );
+  }
+}
 
 import * as kb from "./knowledge.js";
 import * as retrieval from "./retrievalClient.js";
@@ -24,14 +42,77 @@ const upload = multer({
 // Health / meta
 // ---------------------------------------------------------------------------
 
+/* ---------------------------------------------------------------------------
+   Request logging
+   Metadata only. The narrative, uploaded files and the API key are never
+   logged - only route, method, id, status and duration.
+   --------------------------------------------------------------------------- */
+
+const SENSITIVE_ENV = /api[-_]?key|authorization|secret|token/i;
+
+app.use((req, res, next) => {
+  req.id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  req.startedAt = Date.now();
+  res.setHeader("X-Request-Id", req.id);
+
+  res.on("finish", () => {
+    const ms = Date.now() - req.startedAt;
+    // Health polling is noisy and useless in a log.
+    if (req.path === "/api/health") return;
+    console.log(
+      `  [${req.id}] ${req.method} ${req.path} -> ${res.statusCode} ${ms}ms` +
+        (res.locals.note ? ` (${res.locals.note})` : ""),
+    );
+  });
+
+  if (process.env.LOG_REQUEST_BODIES === "true" && req.path === "/api/analyze") {
+    const clone = { ...req.body };
+    for (const k of Object.keys(clone)) {
+      if (SENSITIVE_ENV.test(k)) clone[k] = "[redacted]";
+      else if (k === "narrative") clone[k] = `[${String(clone[k] ?? "").length} chars omitted]`;
+    }
+    console.log(`  [${req.id}] body keys: ${Object.keys(clone).join(", ")}`);
+  }
+
+  next();
+});
+function withDeadline(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve({ __deadline: true, label }), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+/* ---------------------------------------------------------------------------
+   Health / meta
+   --------------------------------------------------------------------------- */
+
 app.get("/api/health", async (_req, res) => {
   const engine = await retrieval.health();
+  const provider = await llm.probe();
+  const llmInfo = llm.describe();
+
+  // `configured` only means a key is present. `liveReady` additionally requires
+  // that the provider answered AND actually serves the configured model. Only
+  // liveReady may ever be reported as mode "ai".
+  const liveReady = Boolean(llmInfo.enabled && provider.reachable && provider.modelAvailable !== false);
+
   res.json({
     ok: true,
     service: "nyayapath-api",
-    version: "1.0.0",
+    version: "1.1.1",
     engine,
-    llm: llm.describe(),
+    llm: {
+      ...llmInfo,
+      configured: llmInfo.enabled,
+      liveReady,
+      // Demoted to deterministic unless a real completion could succeed.
+      mode: liveReady ? "ai" : "deterministic",
+      providerReachable: provider.reachable,
+      modelAvailable: provider.modelAvailable ?? null,
+      providerCheck: provider,
+    },
     corpus: {
       provisions: kb.provisions().length,
       judgments: kb.judgments().length,
@@ -82,10 +163,39 @@ app.get("/api/samples/:id", (req, res) => {
 // Analysis
 // ---------------------------------------------------------------------------
 
+const ANALYZE_DEADLINE_MS = Number(process.env.ANALYZE_DEADLINE_MS || 15000);
+
 app.post("/api/analyze", async (req, res, next) => {
   try {
-    const result = await analysis.analyse(req.body || {});
-    res.json(result);
+    const result = await withDeadline(analysis.analyse(req.body || {}), ANALYZE_DEADLINE_MS, "analyze");
+    res.locals.note = `llm:${result?.llm?.mode || "none"}`;
+
+    if (result?.__deadline) {
+      // Extremely defensive: analysis() is already bounded internally, so this
+      // only fires if something outside it wedges. Say so plainly instead of
+      // leaving the client waiting.
+      res.locals.note = "deadline";
+      return res.status(504).json({
+        error: "analysis_timeout",
+        detail: `The analysis did not complete within ${ANALYZE_DEADLINE_MS / 1000}s and was stopped.`,
+        hint: "Retry, or continue with the deterministic view.",
+      });
+    }
+
+    // Never let a partially-computed analysis reach the client.
+    if (!result || !Array.isArray(result.provisions)) {
+      res.locals.note = "incomplete";
+      return res.status(500).json({
+        error: "analysis_incomplete",
+        detail: "The analysis did not produce a complete result.",
+        hint: "Retry the request.",
+      });
+    }
+
+    if (result.llm?.mode !== "ai") {
+      res.locals.note = `deterministic:${result.llm?.reason || "unknown"}`;
+    }
+    return res.json(result);
   } catch (err) {
     next(err);
   }
@@ -246,7 +356,10 @@ app.post("/api/pdf/extract", upload.single("file"), async (req, res) => {
 });
 
 // multer's own errors (size, field name) surface as 500 by default.
-app.use((err, _req, res, _next) => {
+// This MUST call next(err) for anything it does not handle: a 4-argument
+// Express error handler that returns without responding leaves the request
+// hanging forever with no status and no body.
+app.use((err, _req, res, next) => {
   if (err?.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({
       ok: false,
@@ -255,23 +368,30 @@ app.use((err, _req, res, _next) => {
       detail: `The limit is ${pdf.MAX_PDF_BYTES / 1024 / 1024} MB.`,
     });
   }
-  return null;
+  return next(err);
 });
 
 // ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
 
-app.use((err, _req, res, _next) => {
-  if (res.headersSent) return;
+app.use((err, req, res, _next) => {
+  const msg = err?.message || String(err);
+  // Never log the narrative or the key. Route + message only.
+  console.error(`  [${req?.id || "-"}] ERROR ${req?.path || ""}: ${msg}`);
+
+  if (res.headersSent) {
+    // Response already started; the only safe move is to end it.
+    return res.end();
+  }
   if (err?.payload) {
     return res.status(err.status || 422).json(err.payload);
   }
-  console.error("[api] unhandled error:", err);
-  res.status(500).json({
+  return res.status(500).json({
     error: "internal_error",
     detail:
       "The request could not be completed. This is a bug in the NyayaPath prototype, not a problem with your case.",
+    hint: "Retry. If it keeps failing, restart the API service.",
   });
 });
 

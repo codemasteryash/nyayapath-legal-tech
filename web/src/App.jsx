@@ -7,6 +7,8 @@ import Sources from "./views/Sources.jsx";
 import PdfPanel from "./views/PdfPanel.jsx";
 import {
   ActionPlan,
+  AiBadge,
+  AiBlock,
   LegalResearch,
   Overview,
   TimelineEvidence,
@@ -150,6 +152,7 @@ function Workspace({ data, form, meta, samples, go, onReset, onToast }) {
     { id: "research", label: "Legal Research", count: data.provisions.length + data.judgments.length, icon: "scale" },
     { id: "plan", label: "Action Plan", count: data.actionPlan.length, icon: "route" },
     { id: "documents", label: "Documents", count: null, icon: "upload" },
+    { id: "ai", label: "AI Reading", count: null, icon: "info" },
   ];
 
   return (
@@ -172,6 +175,7 @@ function Workspace({ data, form, meta, samples, go, onReset, onToast }) {
                 <span>
                   {heldCount}/{data.evidence.length} evidence · {doneCount}/{data.actionPlan.length} steps
                 </span>
+                <AiBadge llm={data.llm} />
               </div>
             </div>
 
@@ -253,6 +257,39 @@ function Workspace({ data, form, meta, samples, go, onReset, onToast }) {
                 </div>
               </div>
             </>
+          ) : null}
+        {tab === "ai" ? (
+            data.llm?.ok ? (
+              <AiBlock llm={data.llm} />
+            ) : (
+              <div className="grid-2">
+                <Notice tone="info" title="No model was used for this case">
+                  <p>
+                    {data.llm?.message ||
+                      "Live AI is not configured, so every field in this workspace came from the bundled corpus and the retrieval engine."}
+                  </p>
+                  {data.llm?.reason ? (
+                    <p style={{ marginTop: 8 }}>
+                      Reason: <code>{data.llm.reason}</code>
+                    </p>
+                  ) : null}
+                  <p style={{ marginTop: 10 }}>
+                    To turn it on, copy <code>server/.env.example</code> to{" "}
+                    <code>server/.env</code>, put a real provider key in it, and restart the API. The
+                    key stays on the server and is never sent to the browser.
+                  </p>
+                </Notice>
+                <Panel title="What you are looking at instead" icon="book">
+                  <p style={{ fontSize: "0.86rem", color: "var(--ink-soft)", margin: 0 }}>
+                    This is the deterministic path and it is complete on its own: the facts, timeline
+                    and evidence are extracted by rule, the provisions and decisions come from the
+                    verified corpus through the retrieval engine, and the action plan is read straight
+                    from corpus records. Nothing is generated, so nothing can be hallucinated — at the
+                    cost of being keyword-level rather than reading comprehension.
+                  </p>
+                </Panel>
+              </div>
+            )
           ) : null}
         </div>
       </main>

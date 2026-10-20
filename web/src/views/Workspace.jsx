@@ -1,6 +1,133 @@
 import { useMemo, useState } from "react";
 import { Icon, Meter, Notice, Panel, Tag, Empty } from "../ui.jsx";
 
+function AiBadge({ llm, compact }) {
+  const live = llm?.mode === "ai" && llm?.ok;
+  const title = live
+    ? `Live model analysis via ${llm.provider} (${llm.model})`
+    : `Deterministic output - no model was used${
+        llm?.message ? `: ${llm.message}` : ""
+      }`;
+
+  return (
+    <span
+      className={`tag ${live ? "tag--strong" : "tag--plain"}`}
+      title={title}
+      style={{ cursor: "help" }}
+    >
+      <Icon name={live ? "check" : "lock"} size={11} />
+      {compact
+        ? live
+          ? "AI assisted"
+          : "Verified sources only"
+        : live
+          ? `Live AI analysis - ${llm.provider} / ${llm.model}`
+          : "Deterministic - corpus only"}
+    </span>
+  );
+}
+
+function AiBlock({ llm }) {
+  const r = llm?.result;
+  if (!r) return null;
+
+  return (
+    <div style={{ display: "grid", gap: 22 }}>
+      {r.caseSummary ? (
+        <Panel
+          title="Case summary, written from your account"
+          icon="doc"
+          sub="Generated from your narrative plus the retrieved sources"
+          right={<AiBadge llm={llm} compact />}
+        >
+          <p style={{ fontSize: "0.92rem", lineHeight: 1.68, color: "var(--ink)", margin: 0 }}>
+            {r.caseSummary}
+          </p>
+        </Panel>
+      ) : null}
+
+      <div className="grid-2">
+        <Panel title="Issues identified" icon="layers" right={<AiBadge llm={llm} compact />}>
+          {r.keyIssues?.length ? (
+            <ul className="gaps">
+              {r.keyIssues.map((k, i) => (
+                <li key={i}>{k}</li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ fontSize: "0.86rem", color: "var(--ink-faint)", margin: 0 }}>
+              The model did not return any.
+            </p>
+          )}
+        </Panel>
+
+        <Panel title="What we still need to know" icon="search" right={<AiBadge llm={llm} compact />}>
+          {r.missingInformation?.length ? (
+            <ul className="gaps">
+              {r.missingInformation.map((k, i) => (
+                <li key={i}>{k}</li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ fontSize: "0.86rem", color: "var(--ink-faint)", margin: 0 }}>
+              The model did not identify anything missing.
+            </p>
+          )}
+        </Panel>
+      </div>
+
+      {r.actionSuggestions?.length ? (
+        <Panel title="Suggested next steps" icon="route" right={<AiBadge llm={llm} compact />}>
+          {r.actionSuggestions.map((a, i) => (
+            <div
+              key={i}
+              style={{ padding: "12px 0", borderBottom: i < r.actionSuggestions.length - 1 ? "1px solid var(--ivory-200)" : 0 }}
+            >
+              <p style={{ margin: "0 0 3px", fontWeight: 600, fontSize: "0.89rem", color: "var(--navy-800)" }}>
+                {a.step}
+              </p>
+              {a.why ? (
+                <p style={{ margin: 0, fontSize: "0.83rem", color: "var(--ink-soft)", lineHeight: 1.55 }}>
+                  {a.why}
+                </p>
+              ) : null}
+            </div>
+          ))}
+          <p style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginTop: 12, marginBottom: 0 }}>
+            These sit alongside the Action Plan, which is the version to follow because every step in
+            it is tied to a source record.
+          </p>
+        </Panel>
+      ) : null}
+
+      {r.evidenceToGather?.length ? (
+        <Panel title="Additional evidence worth keeping" icon="doc" right={<AiBadge llm={llm} compact />}>
+          <ul className="gaps">
+            {r.evidenceToGather.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        </Panel>
+      ) : null}
+
+      {r.uncertainty ? (
+        <Notice tone="warn" title="What the model could not confirm">
+          <p>{r.uncertainty}</p>
+        </Notice>
+      ) : null}
+
+      <Notice tone="info" title="How to read this section">
+        <p>
+          The model was given only the provisions and decisions retrieved for your narrative, and was
+          instructed to use nothing else. Anything it produced that referenced a statute not in that
+          list was stripped out. Identity, wording and deadlines still come from the corpus, never
+          from the model. It has not been checked by a lawyer.
+        </p>
+      </Notice>
+    </div>
+  );
+}
+
 /* ==========================================================================
    Tab 1 — Overview
    ========================================================================== */
@@ -13,13 +140,14 @@ function Overview({ data }) {
       <div>
         <Panel title="Case summary" icon="doc" sub="Assembled from your own words only">
           <p style={{ fontSize: "0.94rem", lineHeight: 1.66, color: "var(--ink)" }}>
-            {llm?.summary || summary.opening}
+            {summary.aiSummary || summary.opening}
           </p>
 
-          {llm?.summary ? (
+          {summary.aiSummary ? (
             <p style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginTop: 0 }}>
-              <Tag tone="warn">Machine paraphrase</Tag>{" "}
-              {llm.notice}
+              <Tag tone="strong">Machine paraphrase</Tag>{" "}
+              {llm?.notices?.[0] ||
+                "Restates the facts you entered. No section, citation or deadline is taken from this text."}
             </p>
           ) : null}
 
@@ -179,6 +307,12 @@ function Overview({ data }) {
             </div>
           ))}
         </Panel>
+
+        {data.uncertainty.aiUncertainty ? (
+          <Notice tone="warn" title="Additional uncertainty flagged by the model">
+            <p>{data.uncertainty.aiUncertainty}</p>
+          </Notice>
+        ) : null}
 
         <Notice tone="info" title="Before you use this">
           <p>
@@ -374,6 +508,19 @@ function ProvisionCard({ p }) {
               {p.whyItMatters}
             </p>
           ) : null}
+
+          {p.aiWhy ? (
+            <p
+              className="prov__why"
+              style={{ background: "var(--ivory-100)", borderLeftColor: "var(--navy-600)", color: "var(--ink-soft)" }}
+            >
+              <b style={{ color: "var(--navy-700)" }}>Why this may apply to your facts. </b>
+              {p.aiWhy}
+              <span style={{ display: "block", fontSize: "0.72rem", color: "var(--ink-faint)", marginTop: 5 }}>
+                Machine-generated explanation, not checked by a lawyer.
+              </span>
+            </p>
+          ) : null}
           {p.repealedAct ? (
             <p style={{ fontSize: "0.76rem", color: "var(--ink-faint)", margin: "0 0 9px" }}>
               Replaced the {p.repealedAct} section numbering from 1 July 2024.
@@ -505,6 +652,12 @@ function LegalResearch({ data, meta }) {
                     <b>Why we surfaced it</b>
                     <p>{j.relevance}</p>
                   </div>
+                  {j.aiWhy ? (
+                    <div className="judg__block">
+                      <b>How this may relate to your facts — machine-generated</b>
+                      <p>{j.aiWhy}</p>
+                    </div>
+                  ) : null}
 
                   <div className="judg__foot">
                     <Tag tone={j.relevance === "strong" ? "strong" : j.relevance === "moderate" ? "moderate" : "weak"}>
@@ -840,4 +993,4 @@ export function buildPrintDocument(data, form) {
   return L.join("\n");
 }
 
-export { Overview, TimelineEvidence, LegalResearch, ActionPlan };
+export { Overview, TimelineEvidence, LegalResearch, ActionPlan, AiBlock, AiBadge };

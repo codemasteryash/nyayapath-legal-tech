@@ -472,13 +472,69 @@ export async function analyse(rawInput) {
     gaps.push("No provision in the bundled corpus could be matched to this narrative.");
   }
 
-  let paraphrase = null;
-  if (llm.isEnabled() && process.env.NYAYAPATH_LLM_ENABLED !== "0") {
-    paraphrase = await llm.paraphrase({
-      facts: facts.facts,
-      issueType: primary.label,
+  // --- Optional live model pass -------------------------------------------
+  // The deterministic result above is already complete. The model may only
+  // enrich it. If the model is disabled, misconfigured, slow or wrong, the
+  // deterministic result is returned untouched and `llm.mode` says so.
+  // Declared here, before the optional model pass, so the model can append to
+  // `gaps` without referencing a binding that does not exist yet.
+  const uncertainty = {
+    gaps,
+    reliability: buildReliability({
+      facts, timeline, provisions, judgments, evidence, retrievalNote, language,
+    }),
+    engine: "sparse TF-IDF retrieval over a curated corpus (no language model in the core path)",
+  };
+
+  let ai = { ok: false, mode: "deterministic", reason: "not_attempted" };
+  if (llm.isEnabled()) {
+    ai = await llm.analyseCase({
+      narrative: text,
       languageCode: language.code,
+      languageLabel: language.label,
+      categoryLabel: primary.label,
+      provisions: provisions.slice(0, 12).map((p) => ({
+        id: p.id,
+        section: p.section,
+        heading: p.heading,
+        summary: p.summary,
+        actShortTitle: p.actShortTitle,
+        sourceUrl: p.sourceUrl,
+      })),
+      judgments: judgments.map((j) => ({
+        id: j.id,
+        title: j.title,
+        citation: j.citation,
+        court: j.court,
+        year: j.year,
+        holding: j.holding,
+        verifyUrl: j.verifyUrl,
+      })),
+      evidence: evidence.slice(0, 12),
     });
+
+    // Merge the explanations back onto the deterministic records. Only the
+    // "why" text is taken from the model; identity and text stay from corpus.
+    if (ai.ok) {
+      for (const ex of ai.provisionExplanations || []) {
+        const target = provisions.find((p) => p.id === ex.id);
+        if (target && ex.why) target.aiWhy = ex.why;
+      }
+      for (const ex of ai.judgmentExplanations || []) {
+        const target = judgments.find((j) => j.id === ex.id);
+        if (target && ex.why) target.aiWhy = ex.why;
+      }
+      if (ai.uncertainty) {
+        uncertainty.aiUncertainty = ai.uncertainty;
+      }
+      if ((ai.missingInformation || []).length) {
+        uncertainty.gaps.push(...ai.missingInformation);
+      }
+      if (ai.caseSummary) {
+        summary.aiSummary = ai.caseSummary;
+        summary.language = language;
+      }
+    }
   }
 
   return {
@@ -508,17 +564,33 @@ export async function analyse(rawInput) {
     followUps,
     applicability: applicabilityInfo,
     referrals: referralsFor(resolved, emergency),
-    uncertainty: {
-      gaps,
-      reliability: buildReliability({
-        facts, timeline, provisions, judgments, evidence, retrievalNote, language,
-      }),
-      engine: "sparse TF-IDF retrieval over a curated corpus (no language model in the core path)",
-    },
+    uncertainty,
     retrievalNote,
     disclaimer: kb.disclaimer(),
     generatedAt: new Date().toISOString(),
-    llm: { used: Boolean(paraphrase && paraphrase.ok), result: paraphrase && paraphrase.ok ? paraphrase : null },
+    llm: {
+      // mode is the single source of truth for the UI badge.
+      mode: ai.ok ? "ai" : "deterministic",
+      ok: ai.ok,
+      provider: ai.provider || llm.describe().provider,
+      model: ai.ok ? ai.model : null,
+      reason: ai.ok ? null : ai.reason,
+      message: ai.ok ? null : ai.message,
+      durationMs: ai.durationMs ?? null,
+      notices: ai.ok ? ai.notices : [],
+      result: ai.ok
+        ? {
+            caseSummary: ai.caseSummary,
+            keyIssues: ai.keyIssues,
+            missingInformation: ai.missingInformation,
+            evidenceToGather: ai.evidenceToGather,
+            actionSuggestions: ai.actionSuggestions,
+            uncertainty: ai.uncertainty,
+            provisionExplanations: ai.provisionExplanations,
+            judgmentExplanations: ai.judgmentExplanations,
+          }
+        : null,
+    },
   };
 }
 

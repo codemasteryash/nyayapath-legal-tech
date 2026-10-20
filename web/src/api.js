@@ -6,25 +6,44 @@
 const BASE = import.meta.env.VITE_API_BASE || "/api";
 
 export class ApiError extends Error {
-  constructor(message, { status, code, payload } = {}) {
+  constructor(message, { status, code, payload, timedOut } = {}) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.payload = payload;
+    this.timedOut = Boolean(timedOut);
   }
 }
 
+/**
+ * Every request is bounded. Without this a stalled server leaves the UI on
+ * "Building your workspace..." forever with no way out.
+ */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 async function request(path, options = {}) {
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
   let res;
   try {
-    res = await fetch(`${BASE}${path}`, options);
-  } catch {
+    res = await fetch(`${BASE}${path}`, { ...options, signal: controller.signal });
+  } catch (err) {
+    clearTimeout(timer);
+    if (err?.name === "AbortError") {
+      throw new ApiError(
+        `The service did not respond within ${Math.round(timeoutMs / 1000)} seconds. It may be busy or the model may be slow. You can retry, or continue without the model.`,
+        { code: "client_timeout", timedOut: true },
+      );
+    }
     throw new ApiError(
       "Could not reach the NyayaPath service. Check that the API is running on port 8787 and try again.",
       { code: "network" },
     );
   }
+  clearTimeout(timer);
 
   const isJson = (res.headers.get("content-type") || "").includes("application/json");
   const body = isJson ? await res.json().catch(() => null) : null;
@@ -34,11 +53,14 @@ async function request(path, options = {}) {
       body?.detail ||
       body?.error ||
       `The request failed (HTTP ${res.status}).`;
-    throw new ApiError(message, {
-      status: res.status,
-      code: body?.error || body?.code,
-      payload: body,
-    });
+    throw new ApiError(
+      body?.hint ? `${message} ${body.hint}` : message,
+      {
+        status: res.status,
+        code: body?.error || body?.code,
+        payload: body,
+      },
+    );
   }
 
   return body;
@@ -65,6 +87,9 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
+      // Must exceed the server's own deadline so the server wins and returns a
+      // structured 504, rather than the browser giving up on a live request.
+      timeoutMs: 45000,
     }),
 
   actionPlan: (category) =>
@@ -120,6 +145,14 @@ export const api = {
       };
       xhr.onerror = () =>
         reject(new ApiError("The upload failed before it reached the service.", { code: "network" }));
+      xhr.ontimeout = () =>
+        reject(
+          new ApiError(
+            "The upload timed out. The document may be too large or the service may be busy.",
+            { code: "client_timeout", timedOut: true },
+          ),
+        );
+      xhr.timeout = 60000;
       xhr.send(form);
     });
   },

@@ -42,6 +42,10 @@ export default function Intake({
   const [touched, setTouched] = useState(false);
   const [localPdf, setLocalPdf] = useState(null);
   const firstErrorRef = useRef(null);
+  // Monotonic id. A response from an abandoned submission can never overwrite
+  // a newer one, and React StrictMode double-invocation cannot double-submit.
+  const submitIdRef = useRef(0);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     if (prefill) setForm({ ...EMPTY, ...prefill });
@@ -60,29 +64,51 @@ export default function Intake({
 
   const charCount = form.narrative.trim().length;
 
-  async function submit(e) {
-    e.preventDefault();
-    setTouched(true);
-    setSubmitError(null);
+async function submit(e) {
+  e?.preventDefault?.();
+  if (inFlightRef.current) return; // hard guard against duplicate submission
 
-    const check = await api.validate(form).catch(() => null);
-    if (check && !check.valid) {
-      setErrors(check.errors);
-      firstErrorRef.current?.focus();
-      return;
-    }
+  setTouched(true);
+  setSubmitError(null);
 
-    setBusy(true);
-    try {
-      const result = await api.analyze(form);
-      onSubmitted(result, form);
-    } catch (err) {
-      setSubmitError(err);
-      if (err.payload?.fields) setErrors(err.payload.fields);
-    } finally {
-      setBusy(false);
-    }
+  const myId = ++submitIdRef.current;
+
+  let check;
+  try {
+    check = await api.validate(form);
+  } catch {
+    check = null; // server-side validation unreachable; let /analyze be the judge
   }
+
+  if (myId !== submitIdRef.current) return; // superseded while validating
+
+  if (check && !check.valid) {
+    setErrors(check.errors);
+    setBusy(false);
+    firstErrorRef.current?.focus();
+    return;
+  }
+
+  inFlightRef.current = true;
+  setBusy(true);
+
+  try {
+    const result = await api.analyze(form);
+    if (myId !== submitIdRef.current) return; // a newer submit won
+    if (!result || !Array.isArray(result.provisions)) {
+      throw new Error("The service returned an incomplete workspace. Please retry.");
+    }
+    onSubmitted(result, form);
+  } catch (err) {
+    if (myId !== submitIdRef.current) return;
+    setSubmitError(err);
+    if (err.payload?.fields) setErrors(err.payload.fields);
+  } finally {
+    // Always leaves the loading state, on success and on failure alike.
+    inFlightRef.current = false;
+    if (myId === submitIdRef.current) setBusy(false);
+  }
+}
 
   const selected = categories.find((c) => c.id === form.category);
   const hints = meta?.referrals || [];
@@ -116,7 +142,30 @@ export default function Intake({
               <div className="form-body">
                 {submitError ? (
                   <Notice tone="warn" title="The workspace could not be generated">
-                    {submitError.message}
+                    <p>{submitError.message}</p>
+                    <p style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        className="btn btn--primary btn--sm"
+                        type="button"
+                        onClick={() => submit()}
+                        disabled={busy}
+                      >
+                        {busy ? "Retrying..." : "Retry"}
+                      </button>
+                      <button
+                        className="btn btn--ghost btn--sm"
+                        type="button"
+                        onClick={() => setSubmitError(null)}
+                      >
+                        Dismiss
+                      </button>
+                    </p>
+                    {submitError.timedOut || submitError.code === "analysis_timeout" ? (
+                      <p style={{ marginTop: 10 }}>
+                        If this keeps happening, the API is not running. Start it with{" "}
+                        <code>npm start</code> in the <code>server</code> folder and reload this page.
+                      </p>
+                    ) : null}
                   </Notice>
                 ) : null}
 
