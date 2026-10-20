@@ -260,18 +260,59 @@ app.get("/api/judgments/:id", (req, res) => {
   });
 });
 
-/** Free-text search across provisions and judgments using the retrieval engine. */
+/**
+ * Cross-statute graph. Either the whole graph, or the subgraph around a set of
+ * provisions. Every edge carries the reason it exists so the user can judge it.
+ */
+app.get("/api/graph", async (req, res) => {
+  const ids = String(req.query.provisions || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+  const category = req.query.category ? String(req.query.category) : null;
+
+  const result = await retrieval.graph({ provisionIds: ids, category });
+  if (!result.ok) {
+    return res.status(503).json({
+      error: "graph_unavailable",
+      detail: result.error || "The graph engine did not respond.",
+    });
+  }
+  res.json({
+    ...result,
+    scope: ids.length ? { provisions: ids } : category ? { category } : { provisions: [] },
+  });
+});
+
+/** Forms and written applications, grouped by issue category. */
+app.get("/api/forms", (req, res) => {
+  const { category } = req.query;
+  const list = category ? kb.forms_for_category(String(category)) : kb.forms();
+  res.json({
+    total: list.length,
+    meta: kb.forms_doc().meta,
+    forms: list,
+  });
+});
+
+/**
+ * Free-text search across provisions and judgments using the retrieval engine.
+ */
 app.get("/api/search", async (req, res) => {
   const q = String(req.query.q || "").trim();
   if (!q) return res.status(400).json({ error: "q_required" });
+  const mode = req.query.mode === "sparse" ? "sparse" : req.query.mode === "dense" ? "dense" : "hybrid";
   const [p, j] = await Promise.all([
-    retrieval.retrieve({ collection: "provisions", query: q, topK: 8 }),
-    retrieval.retrieve({ collection: "judgments", query: q, topK: 5, minScore: 0.03 }),
+    retrieval.retrieve({ collection: "provisions", query: q, topK: 8, mode }),
+    retrieval.retrieve({ collection: "judgments", query: q, topK: 5, minScore: 0.03, mode }),
   ]);
   const acts = kb.acts();
   res.json({
     query: q,
-    engine: "sparse TF-IDF retrieval (not a language model)",
+    engine: "hybrid retrieval - sparse TF-IDF plus multilingual sentence embeddings",
+    mode,
+    denseAvailable: Boolean(p.denseAvailable),
     provisions: p.ok
       ? p.results.map((r) => ({ ...r, actShortTitle: acts[r.act]?.shortTitle }))
       : [],
@@ -292,9 +333,11 @@ app.post("/api/action-plan", (req, res) => {
   const steps = kb.action_template(categoryId) || [];
   const channels = kb.referral_channels();
   const acts = kb.acts();
+  const forms = kb.forms_for_category(categoryId);
 
   res.json({
     category: { id: rec.id, label: rec.label, forum: rec.forum },
+    forms,
     steps: steps.map((step) => ({
       ...step,
       deadlineKind: step.deadline

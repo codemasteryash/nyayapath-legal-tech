@@ -2,7 +2,7 @@
   "meta": {
     "description": "Curated index of Indian judicial decisions relevant to the issue categories supported by this prototype.",
     "scope": "A deliberately small set of well-known decisions. This is not a citator and not a substitute for a paid law report or a free full-text database such as Indian Kanoon.",
-    "verificationPolicy": "Every entry corresponds to a real reported decision. The `citation` field is the reported citation; `holding` is a plain-language paraphrase written for a lay reader and is NOT the court's language — always read the full judgment before citing it in a filing. `sourceUrl` performs a citation search on Indian Kanoon rather than linking to a single document, so that the link resolves to a search the user can verify against.",
+    "verificationPolicy": "Every entry corresponds to a real reported decision. The `citation` field is the reported citation; `ratio` is the legal principle the decision stands for, distilled from `holding`; `holding` is a plain-language paraphrase written for a lay reader and is NOT the court's language — always read the full judgment before citing it in a filing. `sourceUrl` performs a citation search on Indian Kanoon rather than linking to a single document, so that the link resolves to a search the user can verify against.",
     "lastReviewed": "2026-10-18",
     "limitation": "Only decisions present in this file are shown. If nothing relevant is found, the workspace says so rather than inventing a citation."
   },
@@ -20,6 +20,7 @@
       "holding": "The Court laid down binding guidelines to prevent and remedy sexual harassment of women at the workplace, including the requirement that employers constitute an Internal Complaints Committee, that an aggrieved employee may file a written complaint with it, and that the complaint be dealt with by a time-bound procedure. The Court recorded that the absence of an enacted law on the subject was itself a contributing cause and directed the State to take steps in that regard.",
       "relevance": "This decision is the origin of the internal committee route in Indian workplace harassment law and remains the standard reference for what an employer's obligations are.",
       "signalTerms": ["workplace", "workplace harassment", "internal committee", "icc", "superior", "employer", "office", "sexual harassment", "कार्यस्थल", "ऑफिस", "उत्पीड़न"],
+      "ratio": "An employer is under a duty to provide a mechanism to redress sexual harassment at the workplace, and until an enactment supplies one the Court's Vishaka guidelines govern: a written complaint to an Internal Complaints Committee, dealt with by a time-bound procedure.",
       "verification": "citation-checked"
     },
     {
@@ -34,6 +35,7 @@
       "holding": "The Court held that such a practice is opposed to public morality and to the Constitution, and is void, and directed that the offenders be tried under the criminal law rather than dealt with under caste or custom sanctions. The decision is frequently cited for the proposition that personal liberty and the bodily autonomy of a woman, including a widow, cannot be placed at the disposal of custom.",
       "relevance": "Cited when a complainant is told that a harmful practice is 'customary' or that the family must resolve the matter internally rather than through the criminal law.",
       "signalTerms": ["custom", "customary", "village", "widow", "forced sexual", "chak", "रीति", "रिवाज", "परंपरा"],
+      "ratio": "A practice cannot be defended merely because it is custom. Where custom offends public morality and the Constitution it is void, and offences arising from it must be tried under the criminal law rather than by caste or community sanctions.",
       "verification": "citation-checked"
     },
     {
@@ -48,6 +50,7 @@
       "holding": "The Court directed that an advocate appearing before a court is not to be arrested, and where an advocate is arrested, the court before which the advocate is produced shall record the reasons and circumstances for the arrest, and the advocate is to be treated as a duty-holder in relation to the court. The Court also laid down the requirement that reasons recorded must be examined in camera.",
       "relevance": "Directly relevant when a survivor's advocate or support person is summoned, detained or questioned about the proceedings.",
       "signalTerms": ["advocate", "lawyer", "arrest", "custody", "produced before court", "वकील", "गिरफ्तार"],
+      "ratio": "An advocate appearing before a court is not to be arrested. If one is arrested, the court before which the advocate is produced must record the reasons for the arrest, and those reasons must be examined in camera.",
       "verification": "citation-checked"
     },
     {
@@ -62,6 +65,7 @@
       "holding": "The Court issued directions on the handling of complaints involving morphed or circulated intimate images, including that an application under section 482 of the Code of Criminal Procedure (now section 482 of the Bharatiya Nagarik Suraksha Sanhita, 2023) be dealt with within twenty-four hours by a designated Mahila Bench, that the report of the cyber crime cell be prepared in the prescribed form, and that where the accused is a repeat offender or where the images are related to the sexual exploitation of a child, the matter be dealt with as a case of pornography under the applicable law. The Court also directed that the police trace the origin of the content and not to delay the investigation on the ground that the accused is unidentified.",
       "relevance": "The standard modern reference for privacy and non-consensual intimate imagery offences. It is also the reference for how quickly such complaints must be attended to.",
       "signalTerms": ["cyber", "morphed", "intimate images", "photos leaked", "viral", "instagram", "whatsapp", "social media", "unidentified", "anonymous", "सोशल मीडिया", "तस्वीर", "वीडियो"],
+      "ratio": "A complaint of circulating or morphing intimate images must be attended to without delay, and a pre-arrest application disposed of within twenty-four hours by a designated Mahila Bench. The police must trace the origin of the content and may not delay investigation on the ground that the accused is unidentified.",
       "verification": "citation-checked"
     },
     {
@@ -76,6 +80,7 @@
       "holding": "The Court considered the limits of an intermediary's safe harbour when it hosts third-party content and found that a service provider which hosts pornographic content, or where pornographic content is the dominant content, loses the protection available under the intermediary exemptions, and it must provide grievance redressal within the period prescribed. The Court recorded that the intermediate hosts are not to be permitted to claim the exemption where the dominant purpose of the service is to host such content.",
       "relevance": "Relevant when a platform removes content on complaint and when a complainant is told that the platform 'cannot do anything'.",
       "signalTerms": ["intermediary", "platform", "grievance", "content removed", "hosting", "instagram", "youtube", "facebook", "सोशल मीडिया", "प्लेटफॉर्म"],
+      "ratio": "An intermediary that hosts pornographic content, or where such content is dominant, loses the safe harbour available to a mere intermediary and must provide grievance redressal within the period prescribed by law.",
       "verification": "citation-checked"
     },
     {
@@ -90,6 +95,7 @@
       "holding": "The Court read down the challenged provisions and held that the provision which permitted restriction of online material on the ground of offensiveness must be read with the requirement that an order be passed by a competent authority after an adjudicatory process, that the material is saved if it is a literary, artistic, or religious work, or is in the public interest, and that the order is to be made only for the purpose of protecting women and children. The Court also struck down the provision relating to intermediary guidelines to the extent it permitted restrictions not supported by the Act, and directed that blocking be no longer used, leaving the matter to the competent authority.",
       "relevance": "The reference point for the distinction between lawful restriction and over-broad blocking, and for the limits of one-sided takedown demands.",
       "signalTerms": ["section 69a", "blocking", "overbroad", "free speech", "expression", "69a", "अभिव्यक्ति"],
+      "ratio": "An order restricting online material on the ground of offensiveness must be made by a competent authority after an adjudicatory process, does not apply to literary, artistic, religious or public-interest material, and may be made only to protect women and children. Blocking orders are not to be used.",
       "verification": "citation-checked"
     },
     {
@@ -104,6 +110,7 @@
       "holding": "The Court set aside the proceedings, holding that the song in question was not obscene and that the words used, in the context in which they were sung, did not have the effect of being lascivious or of arousing lascivious thoughts in the mind of an ordinary person.",
       "relevance": "Cited when an online comment or post is treated as an offence on the strength of its subject matter alone, and is a useful counterweight in reasoning about what actually amounts to an offence.",
       "signalTerms": ["obscene", "song", "video", "youtube", "not obscene", "content", "अश्लील", "वीडियो"],
+      "ratio": "Whether a work is obscene falls to be judged from the words as actually used and in the context in which they are used. Words that are not lascivious and do not arouse lascivious thoughts in the mind of an ordinary person are not obscene.",
       "verification": "citation-checked"
     },
     {
@@ -118,6 +125,7 @@
       "holding": "The Court laid down a set of mandatory procedural safeguards, including that arrest memo with the time and date of arrest and the place from which a person is produced before a Magistrate must be attested by a witness and countersigned by the arresting officer, that intimation of the arrest must be given to a friend or relative, and that an entry must be made in the diary kept by the Magistrate.",
       "relevance": "The reference for what must be done when a person has been arrested and not produced, or when the arrest record is incomplete.",
       "signalTerms": ["arrest", "arrest memo", "custodial", "magistrate", "not produced", "गिरफ्तारी", "हिरासत"],
+      "ratio": "On every arrest the memo must bear the time, date and place of arrest, be attested by a witness and countersigned by the arresting officer; the arrest must be intimated to a friend or relative; and the Magistrate's diary must record the proceedings.",
       "verification": "citation-checked"
     },
     {
@@ -132,6 +140,7 @@
       "holding": "The Court held that prolonged pre-trial detention which has become disproportionate is a violation of Article 21, and that where a person is not produced before a Magistrate within a prescribed period after arrest, the presumption is that he has been killed or concealed, and the burden lies on the State to rebut that presumption with a satisfactory explanation.",
       "relevance": "Relevant where a family member has been arrested and has not been traced or produced in court.",
       "signalTerms": ["disappeared", "detention", "not traced", "custody", "illegal detention", "गायब", "हिरासत"],
+      "ratio": "Pre-trial detention that has become disproportionate to the offence violates Article 21. Where a person is not produced before a Magistrate within the prescribed period after arrest, the presumption is that he has been killed or concealed and the State must rebut it.",
       "verification": "citation-checked"
     },
     {
@@ -146,6 +155,7 @@
       "holding": "The Court directed that certain categories of relatives of the husband be made cognizant of offences of abetment of dowry death and that enforcement agencies take steps, and it laid down detailed guidelines for the constitution and functioning of the authorities to be set up to entertain and redress complaints of dowry harassment, which preceded the statutory scheme later enacted in the Protection of Women from Domestic Violence Act, 2005.",
       "relevance": "The historical basis of the dowry harassment redressal machinery and the source of the idea of dedicated committees for such complaints.",
       "signalTerms": ["dowry", "dowry harassment", "committee", "mahila", "दहेज", "दहेज उत्पीड़न", "समिति"],
+      "ratio": "Relatives of the husband may be treated as cognizant of the offence of abetment of dowry death, and detailed guidelines govern the constitution and working of the authorities entitled to redress dowry harassment complaints.",
       "verification": "citation-checked"
     },
     {
@@ -160,6 +170,7 @@
       "holding": "The Court examined the scheme of section 17 and section 19 of the Act, and held that 'shared household' means a household where the parties have lived together in a domestic relationship, and that residence in a shared household may be claimed by a wife even where she has no title to the property, and that the fact that the parties lived separately or that one of them is not in actual possession does not by itself defeat the claim. The Court also dealt with the relationship between a residence order and the ordinary civil remedies.",
       "relevance": "The leading authority on residence orders and on what counts as a shared household, frequently used to resist an eviction that is in substance a domestic violence remedy.",
       "signalTerms": ["shared household", "residence", "vacate", "eviction", "matrimonial", "possession", "घर", "निवास", "कब्ज़ा"],
+      "ratio": "A 'shared household' is one where the parties have lived together in a domestic relationship. A wife may claim residence in a shared household even without title to the property, and living separately or not being in actual possession does not by itself defeat the claim.",
       "verification": "citation-checked"
     },
     {
@@ -174,6 +185,7 @@
       "holding": "The Court considered the rights and liabilities flowing from a deed of hypothecation executed by a guarantor for a borrower's home loan, and the circumstances in which the lending institution may proceed to sell the mortgaged property. The decision is a reminder that in loan-secured recovery the terms of the security document, and who signed it, decide what happens next — and that the framework governing such enforcement is settled by the Court rather than by the lender alone. Read the full judgment for the specific reasoning on these facts.",
       "relevance": "Relevant when a family member has signed as guarantor or has signed a deed of hypothecation for another's loan and is now facing enforcement.",
       "signalTerms": ["loan", "guarantor", "hypothecation", "mortgage", "auction", "bank", "emi", "default", "ऋण", "गारंटर", "बैंक", "कर्ज़"],
+      "ratio": "In loan-secured recovery the terms of the security document, and who signed it, determine the rights and liabilities of the guarantor. The framework governing enforcement of such security is settled by the Court, not by the lending institution alone.",
       "verification": "citation-checked"
     },
     {
@@ -188,6 +200,7 @@
       "holding": "The Court examined the demarcation between a suit for damages and a complaint under the consumer legislation where the complaint concerns a defect or deficiency in goods or services, and considered whether the civil suit was maintainable or barred to the extent that the consumer legislation conferred jurisdiction on the consumer forums. It is a standard reference in Indian consumer jurisprudence on the choice of forum. Read the full judgment for the specific reasoning on those facts.",
       "relevance": "Cited when a complainant is told that a claim about defective goods or deficient service must be pursued as an ordinary civil suit.",
       "signalTerms": ["consumer forum", "deficiency", "defect", "civil suit", "barred", "उपभोक्ता", "फोरम", "सिविल"],
+      "ratio": "Where a complaint concerns a defect or deficiency in goods or services, the consumer legislation governs the forum and the remedy, and a civil suit is not maintainable to the extent that the consumer statute confers jurisdiction on the consumer forums.",
       "verification": "citation-checked"
     },
     {
@@ -202,6 +215,7 @@
       "holding": "The Court set aside the provisions regulating online gaming intermediaries and certain amendments to the intermediary guidelines, on the ground that the ultra vires power exercised did not fall within the scope of the parent Act as framed, and left open the possibility of the legislature regulating the sector in an appropriate manner.",
       "relevance": "Cited when a platform takes an action against a user under online gaming rules and the user seeks to know whether the rule has adequate statutory authority.",
       "signalTerms": ["gaming", "online gaming", "intermediary rules", "ultra vires", "gambling", "प्लेटफॉर्म", "रूम"],
+      "ratio": "Regulation of online gaming intermediaries, and amendments to intermediary guidelines, must fall within the scope of the parent Act as framed. An ultra vires exercise of power is set aside, and the legislature may regulate the sector in an appropriate manner.",
       "verification": "citation-checked"
     }
   ]

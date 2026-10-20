@@ -42,6 +42,7 @@ import math
 import os
 import re
 import sys
+import threading
 import unicodedata
 from collections import Counter
 from pathlib import Path
@@ -288,6 +289,251 @@ class TfidfIndex:
 
 
 # ---------------------------------------------------------------------------
+# Dense vector space
+# ---------------------------------------------------------------------------
+#
+# The sparse index above cannot match a word it has never seen. The dense index
+# below encodes each record and the query into the same 384-dimensional space,
+# so a narrative that never uses the word "cruelty" can still land on a section
+# about cruelty. That is the difference the abstract claims as "dense vector
+# search", and this is what makes it true.
+#
+# It needs sentence-transformers and torch, which are optional. If either is
+# missing, or the model cannot be fetched, the engine degrades to the sparse
+# index and says so through /health rather than pretending otherwise.
+
+EMBED_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+CACHE_DIR = REPO_ROOT / "retrieval" / ".cache"
+EMBED_CACHE = CACHE_DIR / "embeddings.npz"
+
+
+def _load_backend():
+    """Return (SentenceTransformer, numpy) or raise a short reason string."""
+    try:
+        import numpy as np
+        from sentence_transformers import SentenceTransformer
+    except Exception as exc:  # pragma: no cover - depends on the environment
+        raise RuntimeError(f"dense backend unavailable: {exc!r}")
+    return SentenceTransformer, np
+
+
+class DenseIndex:
+    """Cosine similarity over L2-normalised sentence embeddings."""
+
+    def __init__(self, records: list[dict], id_field: str = "id", *, text_of=None):
+        self.id_field = id_field
+        self.records = records
+        self.ids = [r[id_field] for r in records]
+        self.by_id = {r[id_field]: r for r in records}
+        text_of = text_of or TfidfIndex._record_text
+
+        SentenceTransformer, np = _load_backend()
+        self._np = np
+        self._model = SentenceTransformer(EMBED_MODEL)
+
+        cache = self._load_cache(text_of)
+        if cache is None:
+            vectors = self._model.encode(
+                [text_of(r) for r in records],
+                normalize_embeddings=True,
+                convert_to_numpy=True,
+                show_progress_bar=False,
+            )
+            self.matrix = np.asarray(vectors, dtype=np.float32)
+            self._save_cache(text_of)
+        else:
+            self.matrix = cache
+
+    # -- on-disk cache -------------------------------------------------------
+    # Re-encoding 68 records costs a couple of seconds once the model is
+    # resident, but the *first* load of the model costs minutes. Caching the
+    # vectors means a restart pays the model cost once, not once per boot.
+
+    def _fingerprint(self, text_of) -> str:
+        import hashlib
+
+        h = hashlib.sha256()
+        h.update(EMBED_MODEL.encode("utf-8"))
+        for r in self.records:
+            h.update(text_of(r).encode("utf-8"))
+            h.update(b"\x00")
+        return h.hexdigest()
+
+    def _load_cache(self, text_of):
+        np = self._np
+        if not EMBED_CACHE.exists():
+            return None
+        try:
+            with np.load(EMBED_CACHE, allow_pickle=False) as z:
+                if str(z["fingerprint"]) != self._fingerprint(text_of):
+                    return None
+                if list(z["ids"]) != self.ids:
+                    return None
+                return np.asarray(z["matrix"], dtype=np.float32)
+        except Exception:
+            return None
+
+    def _save_cache(self, text_of) -> None:
+        np = self._np
+        try:
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            np.savez(
+                EMBED_CACHE,
+                fingerprint=np.array(self._fingerprint(text_of)),
+                ids=np.array(self.ids),
+                matrix=self.matrix,
+            )
+        except Exception:
+            pass  # a cache miss next boot is not worth failing over
+
+    # -- search --------------------------------------------------------------
+
+    def search(
+        self,
+        query: str,
+        top_k: int = 6,
+        boost_ids: list[str] | None = None,
+        filter_categories: list[str] | None = None,
+        filter_category: str | None = None,
+        min_score: float = 0.02,
+    ) -> list[dict]:
+        if not query or not query.strip():
+            return []
+        np = self._np
+        qv = np.asarray(
+            self._model.encode([query], normalize_embeddings=True,
+                               convert_to_numpy=True, show_progress_bar=False)[0],
+            dtype=np.float32,
+        )
+
+        allow = set(filter_categories or [])
+        boosts = set(boost_ids or [])
+
+        idx_pool = range(len(self.records))
+        if allow:
+            idx_pool = [
+                i for i, r in enumerate(self.records)
+                if set(r.get("categories") or ([r["category"]] if r.get("category") else [])) & allow
+            ]
+        elif filter_category:
+            idx_pool = [
+                i for i, r in enumerate(self.records)
+                if not r.get("categories") or filter_category in r["categories"]
+            ]
+
+        out: list[dict] = []
+        for i in idx_pool:
+            score = float(np.dot(self.matrix[i], qv))
+            if score < min_score:
+                continue
+            rid = self.ids[i]
+            if rid in boosts:
+                score *= 1.15
+            rec = self.records[i]
+            item = {k: v for k, v in rec.items() if not k.startswith("_")}
+            item["score"] = round(score, 4)
+            item["scoreDense"] = item["score"]
+            out.append(item)
+
+        out.sort(key=lambda r: (-r["score"], r[self.id_field]))
+        return out[:top_k]
+
+
+class DenseBundle:
+    """Both dense indexes, built once, with the failure reason kept for /health."""
+
+    def __init__(self):
+        self.prov_index: DenseIndex | None = None
+        self.judg_index: DenseIndex | None = None
+        self.error: str | None = None
+        try:
+            c = corpus()
+            self.prov_index = DenseIndex(c._prov_index_docs, text_of=c._prov_text_of)
+            self.judg_index = DenseIndex(c.judgments, text_of=c._prov_text_of)
+        except Exception as exc:
+            self.error = str(exc)
+
+    @property
+    def ready(self) -> bool:
+        return self.prov_index is not None and self.judg_index is not None
+
+
+_DENSE: DenseBundle | None = None
+_DENSE_LOCK = threading.Lock()
+
+
+def dense() -> DenseBundle:
+    """Build the dense indexes on first use and reuse them after that."""
+    global _DENSE
+    if _DENSE is None:
+        with _DENSE_LOCK:
+            if _DENSE is None:
+                _DENSE = DenseBundle()
+    return _DENSE
+
+
+def warm_dense() -> None:
+    """Load the model in the background so the first real request is not slow.
+
+    The first load of the model takes minutes. Doing it here, off the request
+    path, means the API reports itself warming rather than timing out.
+    """
+
+    def _run() -> None:
+        b = dense()
+        sys.stderr.write(
+            "nyaya-retrieval: dense index %s\n"
+            % ("ready" if b.ready else "unavailable - " + (b.error or "unknown"))
+        )
+        sys.stderr.flush()
+
+    threading.Thread(target=_run, daemon=True, name="dense-warm").start()
+
+
+def _minmax(values: list[float]) -> list[float]:
+    if not values:
+        return []
+    lo, hi = min(values), max(values)
+    if hi - lo < 1e-9:
+        return [1.0 if v > 0 else 0.0 for v in values]
+    return [(v - lo) / (hi - lo) for v in values]
+
+
+def fuse(result_sets: list[tuple[list[dict], float]]) -> list[dict]:
+    """Blend ranked result lists by min-max normalising each one first.
+
+    Sparse cosine and dense cosine live on different scales, so they cannot be
+    added directly. Normalising each list to 0..1 and taking a weighted mean
+    keeps the output on the same 0..1 scale the rest of the API already bands on.
+    """
+    merged: dict[str, dict] = {}
+    weights: dict[str, float] = {}
+    for results, weight in result_sets:
+        if weight <= 0:
+            continue
+        norms = _minmax([r["score"] for r in results])
+        for rec, norm in zip(results, norms):
+            rid = rec["id"]
+            cur = merged.get(rid)
+            if cur is None:
+                merged[rid] = dict(rec)
+                weights[rid] = norm * weight
+            else:
+                weights[rid] += norm * weight
+                if "scoreDense" not in rec:
+                    cur.setdefault("scoreSparse", cur.get("score"))
+                if "matchedTerms" in rec:
+                    cur["matchedTerms"] = rec["matchedTerms"]
+    total_w = sum(w for _, w in result_sets) or 1.0
+    out = []
+    for rid, rec in merged.items():
+        rec["score"] = round(weights[rid] / total_w, 4)
+        out.append(rec)
+    out.sort(key=lambda r: (-r["score"], r["id"]))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Corpus loading
 # ---------------------------------------------------------------------------
 
@@ -330,6 +576,10 @@ class Corpus:
             return {**rec, "_augmented": " ".join(e for e in extra if e)}
 
         self._prov_index_docs = [augment(r) for r in self.provisions]
+        # The dense index must embed exactly the text the sparse index sees, so
+        # both are handed the same extractor over the same augmented records
+        # rather than each re-deriving the searchable text on their own.
+        self._prov_text_of = TfidfIndex._record_text
         self.prov_index = TfidfIndex(self._prov_index_docs)
         self.judg_index = TfidfIndex(self.judgments)
 
@@ -443,18 +693,39 @@ def infer_categories(text: str, explicit: str | None = None) -> list[dict]:
 
 def op_health() -> dict:
     c = corpus()
+    d = _DENSE
+    if d is None:
+        dense_state, dense_ok, dense_detail = "loading", False, "embedding model not started yet"
+    elif d.ready:
+        dense_state, dense_ok, dense_detail = "ready", True, "ready"
+    else:
+        dense_state = "unavailable"
+        dense_ok = False
+        dense_detail = d.error or "dense index failed to build"
     return {
         "ok": True,
-        "engine": "sparse-tfidf-cosine",
-        "isNeuralModel": False,
-        "note": "Lexical TF-IDF retrieval over a curated corpus. No learned semantics: "
-                "a query term absent from the corpus cannot match.",
+        "engine": "sparse-tfidf-cosine + dense-multilingual-embeddings",
+        "isNeuralModel": True,
+        "note": "Hybrid retrieval. A sparse TF-IDF vector space scores exact statutory "
+                "wording, and a 384-dimensional multilingual sentence-embedding space scores "
+                "meaning, so a narrative that never uses the word 'cruelty' can still match a "
+                "section about cruelty. Both run against the same curated corpus.",
         "counts": {
             "provisions": len(c.provisions),
             "judgments": len(c.judgments),
             "categories": len(c.categories),
         },
         "vocabularySize": len(c.prov_index.df) + len(c.judg_index.df),
+        "sparse": {"ok": True, "kind": "tf-idf-cosine", "dimensions": None},
+        "dense": {
+            "ok": dense_ok,
+            "state": dense_state,
+            "kind": "sentence-embeddings-cosine",
+            "model": EMBED_MODEL,
+            "dimensions": 384,
+            "multilingual": True,
+            "detail": dense_detail,
+        },
     }
 
 
@@ -467,22 +738,58 @@ def op_retrieve(payload: dict) -> dict:
     fcat = payload.get("filterCategory")
     fcats = payload.get("filterCategories")
     min_score = float(payload.get("minScore", 0.02))
+    mode = (payload.get("mode") or "hybrid").lower()
 
-    if collection == "judgments":
+    is_judgments = collection == "judgments"
+    if is_judgments:
         index = c.judg_index
-        results = index.search(query, top_k=top_k, boost_ids=boost,
-                               filter_category=fcat, filter_categories=fcats,
-                               min_score=min_score)
     else:
         index = c.prov_index
-        results = index.search(query, top_k=top_k, boost_ids=boost,
-                               filter_categories=fcats, min_score=min_score)
+
+    sparse = index.search(query, top_k=top_k, boost_ids=boost, filter_category=fcat,
+                          filter_categories=fcats, min_score=min_score)
+
+    used = "sparse"
+    dense_results: list[dict] = []
+    bundle = _DENSE
+    want_dense = mode in ("dense", "hybrid")
+    if want_dense and (bundle is not None) and bundle.ready:
+        dindex = bundle.judg_index if is_judgments else bundle.prov_index
+        try:
+            dense_results = dindex.search(query, top_k=top_k, boost_ids=boost,
+                                          filter_category=fcat, filter_categories=fcats,
+                                          min_score=min_score)
+            used = mode if dense_results else "sparse"
+        except Exception as exc:
+            used = "sparse"
+            dense_results = []
+    elif want_dense and bundle is None:
+        # Not warmed yet. Do not block the request on a minutes-long model load.
+        warm_dense()
+        used = "sparse"
+
+    if mode == "sparse" or not dense_results:
+        results = sparse
+    elif mode == "dense":
+        results = dense_results
+    else:
+        # Pull a wider net from each side so the fusion has something to blend.
+        wide_sparse = index.search(query, top_k=max(top_k * 2, top_k), boost_ids=boost,
+                                   filter_category=fcat, filter_categories=fcats,
+                                   min_score=0.0)
+        wide_dense = dindex.search(query, top_k=max(top_k * 2, top_k), boost_ids=boost,
+                                   filter_category=fcat, filter_categories=fcats,
+                                   min_score=0.0)
+        results = fuse([(wide_sparse, 0.4), (wide_dense, 0.6)])[:top_k]
 
     return {
         "ok": True,
         "collection": collection,
         "results": results,
-        "engine": "sparse-tfidf-cosine",
+        "engine": "sparse-tfidf-cosine + dense-multilingual-embeddings",
+        "mode": used,
+        "denseRequested": mode in ("dense", "hybrid"),
+        "denseAvailable": bool(bundle and bundle.ready),
     }
 
 
@@ -490,6 +797,234 @@ def op_categorise(payload: dict) -> dict:
     return {
         "ok": True,
         "categories": infer_categories(payload.get("text", ""), payload.get("explicit")),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Cross-statute graph
+# ---------------------------------------------------------------------------
+#
+# The abstract asks for "an indexed graph of penal codes, civil remedies, and
+# special laws". This builds that graph out of two relationships that are already
+# recorded in the corpus, rather than inventing new ones:
+#
+#   same-issue-cross-statute  Two sections in the same issue category but under
+#                            different statutes - a penal provision beside a civil
+#                            or special one. This is the link that lets a person
+#                            argue one argument across two enactments.
+#   same-filing-step         Two sections the playbook cites together in one step
+#                            of an action plan, so they are relied on in the same
+#                            filing.
+#   shared-legal-vocabulary  Two sections from different statutes built around the
+#                            same distinctive legal vocabulary - the same conduct,
+#                            the same words - which is what lets overlapping
+#                            sections be joined into one argument.
+#   curated                 A link written by hand in the knowledge base.
+#
+# Every edge carries the reason it exists, because an unexplained link in a legal
+# tool is worse than no link at all.
+
+MAX_EDGES_PER_NODE = 6
+# Shared vocabulary has to be *distinctive*, not merely shared. Two provisions
+# that both say "police" are not addressing the same question, so a term only
+# counts once it is rare in the corpus, and a pair must clear an inverse-
+# document-frequency weight rather than a raw count. That keeps links such as
+# BNS-85 <-> DVA-12 (मारपीट / beaten / hit) and drops weak ones like a link on
+# "पैसे" alone.
+MIN_SHARED_DISTINCTIVE = 2
+# The corpus is small, so inverse-document-frequency values sit in a narrow band
+# and cannot separate "police" from "beaten" on their own. Rarity does the work:
+# a term has to appear in at most three provisions before it can carry a link.
+MAX_SHARED_TERM_DF = 3
+MIN_SHARED_WEIGHT = 5.5
+
+
+def _issue_categories(rec: dict) -> set[str]:
+    cats = rec.get("categories")
+    if isinstance(cats, list):
+        return set(cats)
+    cat = rec.get("category")
+    return {cat} if cat else set()
+
+
+def _distinctive_terms(rec: dict) -> set[str]:
+    """The terms that actually characterise this record, not the ones everywhere."""
+    parts = []
+    parts += list(rec.get("keywords") or [])
+    parts += list(rec.get("signalTerms") or [])
+    parts += [str(rec.get("narrativeCues") or "")]
+    parts += [str(rec.get("heading") or "")]
+    toks = set()
+    for p in parts:
+        for t in tokenize(p):
+            if " " in t:          # drop Devanagari bigrams, they inflate overlap
+                continue
+            toks.add(t)
+    return toks
+
+
+def op_graph(payload: dict) -> dict:
+    c = corpus()
+    focus = {str(x) for x in (payload.get("provisionIds") or [])}
+    focus_category = payload.get("category")
+
+    provs = c.provisions
+    index = c.prov_index.by_id
+    cats = {x["id"]: x for x in c.categories}
+
+    # Work out which provisions are in play.
+    if focus:
+        seeds = [p for p in provs if p["id"] in focus]
+    elif focus_category:
+        seeds = [p for p in provs if focus_category in _issue_categories(p)]
+    else:
+        seeds = provs
+    in_scope = {p["id"] for p in seeds}
+
+    edges: dict[tuple[str, str, str], dict] = {}
+
+    def add(a: str, b: str, kind: str, why: str) -> None:
+        if a == b:
+            return
+        key = (a, b, kind) if a < b else (b, a, kind)
+        if key[0] in index and key[1] in index:
+            edges[key] = {"source": key[0], "target": key[1], "kind": kind, "why": why}
+
+    # 1. Same issue, different statute.
+    by_cat: dict[str, list[dict]] = {}
+    for p in provs:
+        for cid in _issue_categories(p):
+            by_cat.setdefault(cid, []).append(p)
+
+    for cid, group in by_cat.items():
+        label = (cats.get(cid) or {}).get("label", cid)
+        group = sorted(group, key=lambda r: r["id"])
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                a, b = group[i], group[j]
+                if a.get("act") == b.get("act"):
+                    continue
+                add(a["id"], b["id"], "same-issue-cross-statute",
+                    f"Both address {label}, but under different statutes, so the same fact pattern "
+                    f"may engage a penal provision and a civil or special one at the same time.")
+
+    # 2. Cited together in one step of an action plan.
+    prov_ids = {p["id"] for p in provs}
+    for cat_id, steps in (c.plans_doc.get("templates") or {}).items():
+        label = (cats.get(cat_id) or {}).get("label", cat_id)
+        for step in steps or []:
+            refs = sorted({r for r in (step.get("authorityRefs") or []) if r in prov_ids})
+            for i in range(len(refs)):
+                for j in range(i + 1, len(refs)):
+                    a, b = index[refs[i]], index[refs[j]]
+                    if a.get("act") == b.get("act"):
+                        continue
+                    add(a["id"], b["id"], "same-filing-step",
+                        f"Both are cited in the same step of the {label} action plan, so they are "
+                        f"relied on together in one filing.")
+
+    # 3. Distinctive vocabulary shared across different statutes.
+    # Terms that appear in nearly every provision ("act", "section", "court") carry
+    # no signal, so each shared term is weighted by how rare it is in the corpus and
+    # a pair has to clear a weight threshold before a link is drawn.
+    vocab = {p["id"]: _distinctive_terms(p) for p in provs}
+    df: Counter = Counter()
+    for terms in vocab.values():
+        df.update(terms)
+
+    n_prov = max(1, len(provs))
+    idf = {t: math.log(n_prov / (c + 1)) for t, c in df.items()}
+
+    scored: list[tuple[float, str, str, list[str]]] = []
+    ordered = sorted(provs, key=lambda r: r["id"])
+    for i in range(len(ordered)):
+        for j in range(i + 1, len(ordered)):
+            a, b = ordered[i], ordered[j]
+            if a.get("act") == b.get("act"):
+                continue
+            shared = vocab[a["id"]] & vocab[b["id"]]
+            if len(shared) < MIN_SHARED_DISTINCTIVE:
+                continue
+            rare = sorted((t for t in shared if df[t] <= MAX_SHARED_TERM_DF),
+                          key=lambda t: idf[t], reverse=True)
+            if len(rare) < MIN_SHARED_DISTINCTIVE:
+                continue
+            weight = sum(idf[t] for t in rare)
+            if weight < MIN_SHARED_WEIGHT:
+                continue
+            scored.append((weight, a["id"], b["id"], rare[:4]))
+
+    scored.sort(key=lambda x: (-x[0], x[1], x[2]))
+    for weight, aid, bid, rare in scored[:400]:
+        add(aid, bid, "shared-legal-vocabulary",
+            f"Both provisions are built around the same distinctive terms ({', '.join(rare)}), "
+            f"which is how the same conduct can be argued under two different enactments.")
+
+    # 4. Explicitly curated links, if a record names any.
+    for p in provs:
+        for other in p.get("relatedProvisions") or []:
+            add(p["id"], other, "curated",
+                "Linked by hand in the knowledge base as addressing the same question.")
+
+    # Keep only edges touching the scope, then thin each node to its strongest links.
+    edges = {k: v for k, v in edges.items() if k[0] in in_scope or k[1] in in_scope}
+
+    degree: dict[str, int] = {}
+    for k in edges:
+        degree[k[0]] = degree.get(k[0], 0) + 1
+        degree[k[1]] = degree.get(k[1], 0) + 1
+
+    per_node: dict[str, int] = {}
+    kept: list[dict] = []
+    # Curated and same-filing links are stated facts, so they win places over the
+    # broader category-level and vocabulary ones.
+    order = {"curated": 0, "same-filing-step": 1, "same-issue-cross-statute": 2,
+             "shared-legal-vocabulary": 3}
+    for key, edge in sorted(edges.items(), key=lambda kv: (order.get(kv[1]["kind"], 9), kv[0])):
+        if per_node.get(key[0], 0) >= MAX_EDGES_PER_NODE and degree.get(key[0], 0) > MAX_EDGES_PER_NODE:
+            continue
+        if per_node.get(key[1], 0) >= MAX_EDGES_PER_NODE and degree.get(key[1], 0) > MAX_EDGES_PER_NODE:
+            continue
+        per_node[key[0]] = per_node.get(key[0], 0) + 1
+        per_node[key[1]] = per_node.get(key[1], 0) + 1
+        kept.append(edge)
+
+    node_ids = sorted(in_scope | {e["source"] for e in kept} | {e["target"] for e in kept})
+    acts = c.acts
+    nodes = []
+    for pid in node_ids:
+        rec = index.get(pid)
+        if not rec:
+            continue
+        act = acts.get(rec.get("act"), {})
+        nodes.append({
+            "id": pid,
+            "act": rec.get("act"),
+            "actShortTitle": act.get("shortTitle"),
+            "actKind": act.get("kind"),
+            "section": rec.get("section"),
+            "heading": rec.get("heading"),
+            "category": rec.get("category"),
+            "categories": sorted(_issue_categories(rec)),
+        })
+
+    # How many distinct statutes the subgraph spans - the graph claim is that it
+    # reaches beyond one enactment, so report it rather than assume it.
+    statutes = sorted({n["act"] for n in nodes if n["act"]})
+    act_of = {n["id"]: n.get("act") for n in nodes}
+    return {
+        "ok": True,
+        "nodes": nodes,
+        "edges": kept,
+        "stats": {
+            "nodes": len(nodes),
+            "edges": len(kept),
+            "statutes": statutes,
+            "statuteCount": len(statutes),
+            "crossStatuteEdges": sum(
+                1 for e in kept if act_of.get(e["source"]) != act_of.get(e["target"])
+            ),
+        },
     }
 
 
@@ -518,6 +1053,8 @@ def handle(payload: dict) -> dict:
         return op_retrieve(payload)
     if op == "categorise":
         return op_categorise(payload)
+    if op == "graph":
+        return op_graph(payload)
     if op == "provision_record":
         return op_provision_record(payload)
     return {"ok": False, "error": "unknown_op", "op": op}
@@ -541,6 +1078,10 @@ def main() -> None:
 
     sys.stderr.write("nyaya-retrieval: ready (pid %d)\n" % os.getpid())
     sys.stderr.flush()
+
+    # Load the embedding model off the request path. The first load is slow;
+    # blocking startup on it would make the API look dead to the Node client.
+    warm_dense()
 
     for line in sys.stdin:
         line = line.strip()

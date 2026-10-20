@@ -43,14 +43,39 @@ function useHashRoute() {
 
 function TopBar({ route, go, health, hasCase, onReset }) {
   const state = !health ? "wait" : health.engine?.ok ? "on" : "off";
+  const dense = health?.engine?.dense;
+  // The embedding model takes a minute or two to load on a cold start. Until it
+  // is ready the engine silently falls back to sparse-only matching, which is a
+  // worse result rather than an error - so say so instead of letting it look
+  // like everything is working.
+  const densePending = Boolean(dense && dense.state === "loading");
+  const denseDead = Boolean(dense && dense.state === "unavailable");
+
   const label = !health
     ? "connecting"
-    : health.engine?.ok
-      ? `${health.corpus.provisions} provisions · ${health.corpus.judgments} decisions`
-      : "service unavailable";
+    : !health.engine?.ok
+      ? "service unavailable"
+      : densePending
+        ? "warming semantic index"
+        : denseDead
+          ? "semantic index unavailable"
+          : `${health.corpus.provisions} provisions · ${health.corpus.judgments} decisions`;
 
   return (
     <header className="topbar no-print">
+      {densePending ? (
+        <div className="topbar__warming no-print">
+          Loading the semantic model. Matching works now on exact statutory wording, and switches to
+          meaning-based matching as soon as it is ready — usually within a minute or two of starting
+          the service.
+        </div>
+      ) : null}
+      {denseDead ? (
+        <div className="topbar__warming topbar__warming--warn no-print">
+          The semantic model could not be loaded, so matching is running on exact statutory wording
+          only. Everything else works.
+        </div>
+      ) : null}
       <div className="topbar__inner">
         <a
           className="brand"
@@ -69,7 +94,9 @@ function TopBar({ route, go, health, hasCase, onReset }) {
 
         <nav className="topbar__nav">
           <span className="topbar__status">
-            <span className={`dot${state === "on" ? "" : state === "off" ? " dot--off" : " dot--wait"}`} />
+            <span
+              className={`dot${state === "on" && !densePending ? "" : state === "off" ? " dot--off" : " dot--wait"}`}
+            />
             {label}
           </span>
           <a
@@ -343,6 +370,24 @@ export default function App() {
       alive = false;
     };
   }, []);
+
+  /* --- poll while the semantic model is warming ------------------------- */
+  useEffect(() => {
+    if (!health?.engine?.dense || health.engine.dense.state !== "loading") return;
+    let alive = true;
+    const t = setInterval(async () => {
+      try {
+        const h = await api.health();
+        if (alive) setHealth(h);
+      } catch {
+        /* keep the last known state; the next tick retries */
+      }
+    }, 5000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [health?.engine?.dense?.state]);
 
   /* --- routing ------------------------------------------------------- */
   useEffect(() => {
