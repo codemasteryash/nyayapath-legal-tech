@@ -434,7 +434,7 @@ app.post("/api/cases/:caseId/messages", async (req, res, next) => {
     }
 
     // Process turn: facts, timeline, corrections, skips
-    processUserTurn(caseObj.id, content);
+    const turnResult = processUserTurn(caseObj.id, content);
 
     // Call the Advanced Python Legal RAG Agent
     const conversationHistory = messagesRepo.list(caseObj.conversationId).map((m) => ({
@@ -492,6 +492,7 @@ app.post("/api/cases/:caseId/messages", async (req, res, next) => {
 
     res.json({
       ok: true,
+      turnResult,
       message: assistantMsg,
       reply: assistantContent,
       category: advocateResult?.category || caseObj.category,
