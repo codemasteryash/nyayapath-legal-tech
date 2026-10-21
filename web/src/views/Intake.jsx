@@ -25,6 +25,14 @@ const NARRATIVE_HINT_EN =
 const NARRATIVE_HINT_HI =
   "बताइए क्या हुआ, किसने किया और कब। यदि तारीख याद न हो तो जो याद हो वही लिखिए। जिस चीज़ को सुरक्षित रखना है उसका भी उल्लेख कीजिए।";
 
+const INTAKE_STEPS = [
+  { label: "The matter", hint: "Name, type, place and date" },
+  { label: "Your account", hint: "Language, narrative and document" },
+  { label: "Review & build", hint: "Check and generate the workspace" },
+];
+
+const MATTER_ERROR_KEYS = ["title", "category", "location", "startDate"];
+
 export default function Intake({
   categories,
   meta,
@@ -41,14 +49,19 @@ export default function Intake({
   const [submitError, setSubmitError] = useState(null);
   const [touched, setTouched] = useState(false);
   const [localPdf, setLocalPdf] = useState(null);
+  const [step, setStep] = useState(0);
   const firstErrorRef = useRef(null);
+  const formRef = useRef(null);
   // Monotonic id. A response from an abandoned submission can never overwrite
   // a newer one, and React StrictMode double-invocation cannot double-submit.
   const submitIdRef = useRef(0);
   const inFlightRef = useRef(false);
 
   useEffect(() => {
-    if (prefill) setForm({ ...EMPTY, ...prefill });
+    if (prefill) {
+      setForm({ ...EMPTY, ...prefill });
+      setStep(0);
+    }
   }, [prefill]);
 
   // A document produced on the workspace Documents tab can be carried back here.
@@ -63,6 +76,19 @@ export default function Intake({
   };
 
   const charCount = form.narrative.trim().length;
+
+  function goToStep(next) {
+    setStep(next);
+    window.requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function stepForErrors(fields) {
+    if (MATTER_ERROR_KEYS.some((key) => fields?.[key])) return 0;
+    if (fields?.narrative) return 1;
+    return 2;
+  }
 
 async function submit(e) {
   e?.preventDefault?.();
@@ -85,7 +111,14 @@ async function submit(e) {
   if (check && !check.valid) {
     setErrors(check.errors);
     setBusy(false);
-    firstErrorRef.current?.focus();
+    setStep(stepForErrors(check.errors));
+    window.requestAnimationFrame(() => {
+      const firstKey = MATTER_ERROR_KEYS.concat("narrative").find(
+        (key) => check.errors[key],
+      );
+      if (firstKey) document.getElementById(firstKey)?.focus();
+      else firstErrorRef.current?.focus();
+    });
     return;
   }
 
@@ -102,7 +135,10 @@ async function submit(e) {
   } catch (err) {
     if (myId !== submitIdRef.current) return;
     setSubmitError(err);
-    if (err.payload?.fields) setErrors(err.payload.fields);
+    if (err.payload?.fields) {
+      setErrors(err.payload.fields);
+      setStep(stepForErrors(err.payload.fields));
+    }
   } finally {
     // Always leaves the loading state, on success and on failure alike.
     inFlightRef.current = false;
@@ -133,10 +169,10 @@ async function submit(e) {
           </div>
 
           <div className="intake">
-            <form className="form-card" onSubmit={submit} noValidate>
+            <form className="form-card" onSubmit={submit} noValidate ref={formRef}>
               <div className="form-card__head">
                 <h2>Case intake</h2>
-                <p>Five fields. Only the account and the type of problem are required.</p>
+                <p>Three short steps. Only the account and the type of problem are required.</p>
               </div>
 
               <div className="form-body">
@@ -169,153 +205,259 @@ async function submit(e) {
                   </Notice>
                 ) : null}
 
-                <div className={errors.title ? "field field--error" : "field"}>
-                  <label htmlFor="title">
-                    Short name for this matter<span className="field__req">*</span>
-                  </label>
-                  <input
-                    id="title"
-                    ref={firstErrorRef}
-                    type="text"
-                    value={form.title}
-                    onChange={set("title")}
-                    placeholder="e.g. Repeat abuse and threats after separation"
-                    aria-invalid={Boolean(errors.title)}
-                  />
-                  {errors.title ? (
-                    <p className="field__error">
-                      <Icon name="alert" size={13} /> {errors.title}
-                    </p>
-                  ) : null}
-                </div>
+                <nav className="intake-steps" aria-label="Case intake steps">
+                  {INTAKE_STEPS.map((item, i) => (
+                    <button
+                      key={item.label}
+                      className="intake-step-tab"
+                      type="button"
+                      data-on={step === i}
+                      data-done={step > i}
+                      aria-current={step === i ? "step" : undefined}
+                      disabled={busy}
+                      onClick={() => goToStep(i)}
+                    >
+                      <span className="intake-step-tab__n">
+                        {step > i ? <Icon name="check" size={12} /> : i + 1}
+                      </span>
+                      <span className="intake-step-tab__text">
+                        <b>{item.label}</b>
+                        <small>{item.hint}</small>
+                      </span>
+                    </button>
+                  ))}
+                </nav>
 
-                <div className={errors.category ? "field field--error" : "field"}>
-                  <label htmlFor="category">
-                    What kind of problem is this?<span className="field__req">*</span>
-                  </label>
-                  <select id="category" value={form.category} onChange={set("category")}>
-                    <option value="">Choose one...</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.label} - {c.labelHi}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category ? (
-                    <p className="field__error">
-                      <Icon name="alert" size={13} /> {errors.category}
-                    </p>
-                  ) : selected ? (
-                    <p className="field__hint">
-                      {selected.blurb} <b>Forum:</b> {selected.forum}
-                    </p>
-                  ) : null}
-                </div>
+                {step === 0 ? (
+                  <div className="intake-step">
+                    <div className="intake-fields">
+                      <div className={errors.title ? "field field--error" : "field"}>
+                        <label htmlFor="title">
+                          Short name for this matter<span className="field__req">*</span>
+                        </label>
+                        <input
+                          id="title"
+                          ref={firstErrorRef}
+                          type="text"
+                          value={form.title}
+                          onChange={set("title")}
+                          placeholder="e.g. Repeat abuse and threats after separation"
+                          aria-invalid={Boolean(errors.title)}
+                        />
+                        {errors.title ? (
+                          <p className="field__error">
+                            <Icon name="alert" size={13} /> {errors.title}
+                          </p>
+                        ) : null}
+                      </div>
 
-                <div className={errors.narrative ? "field field--error" : "field"}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <span className="field__label" style={{ marginBottom: 7 }}>
-                      Your account of what happened<span className="field__req">*</span>
-                    </span>
-                    <div style={{ marginLeft: "auto" }}>
-                      <div className="langbar" role="group" aria-label="Language of the narrative">
-                        {LANGUAGES.map((l) => (
-                          <button
-                            key={l.id}
-                            type="button"
-                            data-on={form.language === l.id}
-                            onClick={() => setForm((f) => ({ ...f, language: l.id }))}
-                            title={l.local}
-                          >
-                            {l.label}
-                          </button>
-                        ))}
+                      <div className={errors.category ? "field field--error" : "field"}>
+                        <label htmlFor="category">
+                          What kind of problem is this?<span className="field__req">*</span>
+                        </label>
+                        <select id="category" value={form.category} onChange={set("category")}>
+                          <option value="">Choose one...</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.label} - {c.labelHi}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.category ? (
+                          <p className="field__error">
+                            <Icon name="alert" size={13} /> {errors.category}
+                          </p>
+                        ) : selected ? (
+                          <p className="field__hint">
+                            {selected.blurb} <b>Forum:</b> {selected.forum}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div className={errors.location ? "field field--error" : "field"}>
+                        <label htmlFor="location">Where did this happen?</label>
+                        <input
+                          id="location"
+                          type="text"
+                          value={form.location}
+                          onChange={set("location")}
+                          placeholder="City or district, State"
+                        />
+                        <p className="field__hint">
+                          Jurisdiction decides which court and which police station are yours.
+                        </p>
+                      </div>
+
+                      <div className={errors.startDate ? "field field--error" : "field"}>
+                        <label htmlFor="startDate">When did it start?</label>
+                        <input
+                          id="startDate"
+                          type="date"
+                          value={form.startDate}
+                          onChange={set("startDate")}
+                        />
+                        <p className="field__hint">
+                          If the events fall before 1 July 2024, different criminal statutes applied
+                          at the time. We will flag that.
+                        </p>
                       </div>
                     </div>
                   </div>
-
-                  <textarea
-                    value={form.narrative}
-                    onChange={set("narrative")}
-                    placeholder={
-                      form.language === "en"
-                        ? "Write it as you would tell a friend. No legal words needed."
-                        : "जैसे किसी को बता रहे हों। कानूनी शब्दों की ज़रूरत नहीं।"
-                    }
-                    aria-invalid={Boolean(errors.narrative)}
-                    lang={form.language === "en" ? "en" : "hi"}
-                  />
-
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                    <p className="field__hint" style={{ marginTop: 7 }}>
-                      {form.language === "en" ? NARRATIVE_HINT_EN : NARRATIVE_HINT_HI}
-                    </p>
-                    <span className="char-count" style={{ flex: "none", alignSelf: "flex-start", marginTop: 7 }}>
-                      {charCount} chars
-                    </span>
-                  </div>
-
-                  {errors.narrative ? (
-                    <p className="field__error">
-                      <Icon name="alert" size={13} /> {errors.narrative}
-                    </p>
-                  ) : null}
-                </div>
-
-                {localPdf?.ok ? (
-                  <Notice tone="good" title="A document is ready to use">
-                    <p>
-                      {localPdf.file.name} - {localPdf.pages} pages, {localPdf.charCount} characters
-                      read. You can pull the extracted text into the narrative, or read it in the
-                      Documents tab of the workspace.
-                    </p>
-                  </Notice>
                 ) : null}
 
-                <div className="row">
-                  <div className={errors.location ? "field field--error" : "field"}>
-                    <label htmlFor="location">Where did this happen?</label>
-                    <input
-                      id="location"
-                      type="text"
-                      value={form.location}
-                      onChange={set("location")}
-                      placeholder="City or district, State"
-                    />
-                    <p className="field__hint">
-                      Jurisdiction decides which court and which police station are yours.
-                    </p>
-                  </div>
+                {step === 1 ? (
+                  <div className="intake-step">
+                    <div className={errors.narrative ? "field field--error" : "field"}>
+                      <div className="intake-narrative-head">
+                        <span className="field__label">
+                          Your account of what happened<span className="field__req">*</span>
+                        </span>
+                        <div className="langbar" role="group" aria-label="Language of the narrative">
+                          {LANGUAGES.map((l) => (
+                            <button
+                              key={l.id}
+                              type="button"
+                              data-on={form.language === l.id}
+                              onClick={() => setForm((f) => ({ ...f, language: l.id }))}
+                              title={l.local}
+                            >
+                              {l.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                  <div className={errors.startDate ? "field field--error" : "field"}>
-                    <label htmlFor="startDate">When did it start?</label>
-                    <input
-                      id="startDate"
-                      type="date"
-                      value={form.startDate}
-                      onChange={set("startDate")}
-                    />
-                    <p className="field__hint">
-                      If the events fall before 1 July 2024, different criminal statutes applied at
-                      the time. We will flag that.
-                    </p>
-                  </div>
-                </div>
+                      <textarea
+                        id="narrative"
+                        value={form.narrative}
+                        onChange={set("narrative")}
+                        placeholder={
+                          form.language === "en"
+                            ? "Write it as you would tell a friend. No legal words needed."
+                            : "जैसे किसी को बता रहे हों। कानूनी शब्दों की ज़रूरत नहीं।"
+                        }
+                        aria-invalid={Boolean(errors.narrative)}
+                        lang={form.language === "en" ? "en" : "hi"}
+                      />
 
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
-                  <button className="btn btn--primary" type="submit" disabled={busy}>
-                    {busy ? "Building your workspace..." : "Build my case workspace"}
-                    {!busy ? <Icon name="arrow" size={15} /> : null}
+                      <div className="intake-narrative-foot">
+                        <p className="field__hint" style={{ marginTop: 7 }}>
+                          {form.language === "en" ? NARRATIVE_HINT_EN : NARRATIVE_HINT_HI}
+                        </p>
+                        <span className="char-count">{charCount} chars</span>
+                      </div>
+
+                      {errors.narrative ? (
+                        <p className="field__error">
+                          <Icon name="alert" size={13} /> {errors.narrative}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {localPdf?.ok ? (
+                      <Notice tone="good" title="A document is ready to use">
+                        <p>
+                          {localPdf.file.name} - {localPdf.pages} pages, {localPdf.charCount}{" "}
+                          characters read. You can pull the extracted text into the narrative, or
+                          read it in the Documents tab of the workspace.
+                        </p>
+                      </Notice>
+                    ) : null}
+
+                    <details className="intake-more">
+                      <summary>
+                        <span>
+                          <b>Attach a document</b>
+                          <small>Optional. Read locally; it is not uploaded by this form.</small>
+                        </span>
+                        <Icon name="chevron" size={15} />
+                      </summary>
+                      <div className="intake-more__body">
+                        <PdfPanel onExtracted={(d) => setLocalPdf(d)} />
+                      </div>
+                    </details>
+                  </div>
+                ) : null}
+
+                {step === 2 ? (
+                  <div className="intake-step">
+                    <div className="intake-review">
+                      <p className="intake-review__eyebrow">Check before building</p>
+                      <dl className="intake-review__grid">
+                        <div>
+                          <dt>Matter</dt>
+                          <dd>{form.title || "Not provided"}</dd>
+                        </div>
+                        <div>
+                          <dt>Type</dt>
+                          <dd>{selected?.label || "Not chosen"}</dd>
+                        </div>
+                        <div>
+                          <dt>Place</dt>
+                          <dd>{form.location || "Not provided"}</dd>
+                        </div>
+                        <div>
+                          <dt>Started</dt>
+                          <dd>{form.startDate || "Not provided"}</dd>
+                        </div>
+                        <div>
+                          <dt>Language</dt>
+                          <dd>{LANGUAGES.find((l) => l.id === form.language)?.label || "English"}</dd>
+                        </div>
+                        <div>
+                          <dt>Document</dt>
+                          <dd>{localPdf?.ok ? localPdf.file.name : "None attached"}</dd>
+                        </div>
+                      </dl>
+
+                      <div className="intake-review__narrative">
+                        <b>Your account</b>
+                        <p>{form.narrative.trim() || "No account entered yet."}</p>
+                      </div>
+
+                      <p className="field__hint">
+                        Nothing is filed. We use these details only to build a workspace from the
+                        bundled corpus and, if configured, the language model.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="intake-nav">
+                  <button
+                    className="btn btn--quiet btn--sm"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => (step === 0 ? onBack() : goToStep(step - 1))}
+                  >
+                    {step === 0 ? "Back to home" : "Back"}
                   </button>
-                  <span style={{ fontSize: "0.78rem", color: "var(--ink-faint)" }}>
-                    {busy ? "Retrieving provisions and decisions..." : "Usually under 3 seconds"}
-                  </span>
+                  <span className="intake-nav__progress">Step {step + 1} of 3</span>
+                  <div className="intake-nav__actions">
+                    {step < 2 ? (
+                      <button
+                        className="btn btn--primary"
+                        type="button"
+                        disabled={busy}
+                        onClick={() => goToStep(step + 1)}
+                      >
+                        Continue <Icon name="arrow" size={15} />
+                      </button>
+                    ) : (
+                      <button className="btn btn--primary" type="submit" disabled={busy}>
+                        {busy ? "Building your workspace..." : "Build my case workspace"}
+                        {!busy ? <Icon name="arrow" size={15} /> : null}
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                <div className="field" style={{ marginTop: 26 }}>
-                  <span className="field__label">Or attach a document</span>
-                  <PdfPanel onExtracted={(d) => setLocalPdf(d)} />
-                </div>
+                {step === 2 ? (
+                  <p className="intake-nav__hint">
+                    {busy
+                      ? "Retrieving provisions and decisions..."
+                      : "Usually under 3 seconds. Requires the local API on port 8787."}
+                  </p>
+                ) : null}
               </div>
             </form>
 
