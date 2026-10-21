@@ -2253,6 +2253,7 @@ select {
     flex: 1;
   }
 }
+
 /* --------------------------------------------------------------------------
    Case briefing: summary, key findings, next steps, evidence compass
    -------------------------------------------------------------------------- */
@@ -3715,4 +3716,212 @@ select {
   .plan-step__meta {
     font-size: 0.64rem;
   }
+}
+
+/* ==========================================================================
+   Cross-statute graph, forms and hidden facts
+   ========================================================================== */
+
+.graphstatutes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 14px;
+}
+.graphstatutes span {
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--sand-100, #f3efe6);
+  color: var(--ink-soft);
+  border: 1px solid var(--line, #e2dccf);
+}
+
+.graphedges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.graphedges button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--line, #e2dccf);
+  border-radius: 8px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.graphedges button:hover {
+  border-color: var(--brass-600);
+  background: rgba(176, 141, 87, 0.06);
+}
+.graphedges__pair {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.graphedges__pair b {
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+.graphedges__acts {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.graphedges__why {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.graphnote {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  line-height: 1.55;
+  margin: 14px 0 0;
+}
+
+.formcard {
+  border: 1px solid var(--line, #e2dccf);
+  border-radius: 10px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+}
+.formcard__head {
+  margin-bottom: 8px;
+}
+.formcard__head h4 {
+  margin: 0 0 3px;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+.formcard__sec {
+  font-size: 0.74rem;
+  color: var(--brass-600);
+}
+.formcard__rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.formcard__rows > div {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 10px;
+}
+.formcard__rows dt {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-faint);
+  padding-top: 2px;
+}
+.formcard__rows dd {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.formcard__note {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 10px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--brass-600);
+}
+.formcard__verify {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+  margin: 8px 0 0;
+}
+
+.judg__block--ratio {
+  background: rgba(176, 141, 87, 0.07);
+  border-left: 3px solid var(--brass-600);
+  padding: 10px 12px;
+  border-radius: 0 8px 8px 0;
+}
+.judg__ratio-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.73rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+.hiddenfacts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hiddenfact {
+  border: 1px solid var(--line, #e2dccf);
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+.hiddenfact--absent {
+  border-left: 3px solid var(--clay-600, #a4553a);
+}
+.hiddenfact--implied {
+  border-left: 3px solid var(--brass-600);
+}
+.hiddenfact__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.hiddenfact__head b {
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.hiddenfact__detail {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0 0 6px;
+}
+.hiddenfact__basis {
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+  margin: 0;
+}
+.hiddenfact__quote {
+  display: block;
+  margin: 7px 0 0;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  font-style: italic;
+}
+
+.topbar__warming {
+  padding: 8px 20px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--brass-700, #6b532c);
+  background: rgba(176, 141, 87, 0.13);
+  border-bottom: 1px solid rgba(176, 141, 87, 0.32);
+  text-align: center;
+}
+.topbar__warming--warn {
+  color: var(--clay-600, #a4553a);
+  background: rgba(164, 85, 58, 0.1);
+  border-bottom-color: rgba(164, 85, 58, 0.3);
 }

@@ -27,6 +27,11 @@ export const judgments_doc = () => load("judgments.json");
 export const playbook_doc = () => load("caseplaybook.json");
 export const actionplans_doc = () => load("actionplans.json");
 export const samples_doc = () => load("samplecases.json");
+export const forms_doc = () => load("forms.json");
+
+export const forms = () => forms_doc().forms || [];
+export const forms_for_category = (id) => forms().filter((f) => f.category === id);
+export const form_by_id = (id) => forms().find((f) => f.id === id) || null;
 
 export const acts = () => provisions_doc().acts || {};
 export const provisions = () => provisions_doc().provisions || [];

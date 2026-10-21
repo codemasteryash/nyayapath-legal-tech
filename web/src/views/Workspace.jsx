@@ -578,6 +578,35 @@ function Overview({ data, meta, onOpenTab }) {
                 </ul>
               </Panel>
 
+              {data.hiddenFacts?.length ? (
+                <Panel
+                  title="What your account implies, and what it leaves out"
+                  icon="alert"
+                  sub="Each item is tied to words you wrote, or to something we could not find"
+                >
+                  <p style={{ fontSize: "0.84rem", color: "var(--ink-soft)", marginTop: 0 }}>
+                    Courts turn on details that people leave out of their own account. These are the ones your
+                    narrative points at, and the ones it does not. Nothing here is asserted that you did not
+                    write.
+                  </p>
+                  <ul className="hiddenfacts">
+                    {data.hiddenFacts.map((h) => (
+                      <li key={h.id} className={`hiddenfact hiddenfact--${h.kind}`}>
+                        <div className="hiddenfact__head">
+                          <Tag tone={h.kind === "implied" ? "strong" : "moderate"}>
+                            {h.kind === "implied" ? "implied" : "missing"}
+                          </Tag>
+                          <b>{h.label}</b>
+                        </div>
+                        <p className="hiddenfact__detail">{h.detail}</p>
+                        <p className="hiddenfact__basis">{h.basis}</p>
+                        {h.evidence ? <q className="hiddenfact__quote">{h.evidence}</q> : null}
+                      </li>
+                    ))}
+                  </ul>
+                </Panel>
+              ) : null}
+
               <Panel title="What we could not establish" icon="alert">
                 {uncertainty.gaps.length ? (
                   <ul className="gaps">
@@ -939,6 +968,16 @@ function JudgmentCard({ j }) {
             <b>Facts it turned on</b>
             <p>{j.factsPattern}</p>
           </div>
+          {j.ratio ? (
+            <div className="judg__block judg__block--ratio">
+              <b>The principle it stands for</b>
+              <p>{j.ratio}</p>
+              <span className="judg__ratio-note">
+                Distilled from the holding recorded in our corpus. Read the full judgment before you put
+                this in front of a court.
+              </span>
+            </div>
+          ) : null}
           <div className="judg__block">
             <b>What the Court held — our paraphrase, not its words</b>
             <p>{j.holding}</p>
@@ -959,6 +998,142 @@ function JudgmentCard({ j }) {
         <span style={{ color: "var(--ink-faint)" }}>text match {j.score?.toFixed(3)}</span>
       </div>
     </article>
+  );
+}
+
+const EDGE_LABELS = {
+  "same-filing-step": "cited in one filing",
+  "same-issue-cross-statute": "same issue, two statutes",
+  "shared-legal-vocabulary": "same conduct, two enactments",
+  curated: "linked in the knowledge base",
+};
+
+/**
+ * The cross-statute graph: which section of one Act connects to which section of
+ * another, and why. Every link carries the reason it exists rather than asking
+ * the reader to take the connection on trust.
+ */
+function CrossStatuteGraph({ graph }) {
+  const [openEdge, setOpenEdge] = useState(null);
+  if (!graph?.nodes?.length || !graph?.edges?.length) return null;
+
+  const labelOf = (id) => {
+    const n = graph.nodes.find((x) => x.id === id);
+    if (!n) return id;
+    return `s. ${n.section}`;
+  };
+  const shortAct = (id) => {
+    const n = graph.nodes.find((x) => x.id === id);
+    if (!n) return "";
+    return (n.actShortTitle || n.act || "").split(",")[0].replace("The ", "");
+  };
+
+  return (
+    <Panel
+      title="How these sections connect"
+      icon="route"
+      sub={`${graph.stats.edges} link${graph.stats.edges === 1 ? "" : "s"} across ${graph.stats.statuteCount} statutes`}
+    >
+      <p style={{ fontSize: "0.84rem", color: "var(--ink-soft)", marginTop: 0 }}>
+        {graph.note}
+      </p>
+
+      <div className="graphstatutes">
+        {graph.stats.statutes.map((a) => (
+          <span key={a}>{a}</span>
+        ))}
+      </div>
+
+      <ul className="graphedges">
+        {graph.edges.map((e, i) => {
+          const isOpen = openEdge === i;
+          return (
+            <li key={`${e.source}-${e.target}-${e.kind}`}>
+              <button type="button" onClick={() => setOpenEdge(isOpen ? null : i)}>
+                <span className="graphedges__pair">
+                  <b>{labelOf(e.source)}</b>
+                  <span className="graphedges__acts">
+                    {shortAct(e.source)} &rarr; {shortAct(e.target)}
+                  </span>
+                </span>
+                <span className="graphedges__why">
+                  {isOpen ? e.why : (EDGE_LABELS[e.kind] || e.kind)}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="graphnote">
+        A link is not an argument. It means two sections were found to address the same conduct, were
+        cited in the same step, or share distinctive legal vocabulary — and the reason is shown so you
+        can disagree with it.
+      </p>
+    </Panel>
+  );
+}
+
+/** The written applications a self-represented person actually files. */
+function FormsPanel({ forms, meta }) {
+  if (!forms?.length) return null;
+  return (
+    <Panel
+      title="Forms and written applications"
+      icon="doc"
+      sub={`${forms.length} paper${forms.length === 1 ? "" : "s"} to file or ask for`}
+    >
+      {forms.map((f) => (
+        <div key={f.id} className="formcard">
+          <div className="formcard__head">
+            <h4>{f.name}</h4>
+            {f.section ? (
+              <span className="formcard__sec">
+                {f.statute}
+                {f.section ? `, s. ${f.section}` : ""}
+              </span>
+            ) : (
+              <span className="formcard__sec">{f.statute}</span>
+            )}
+          </div>
+
+          <dl className="formcard__rows">
+            <div>
+              <dt>Where</dt>
+              <dd>{f.forum}</dd>
+            </div>
+            <div>
+              <dt>How to get it</dt>
+              <dd>{f.howToGet}</dd>
+            </div>
+            {f.canAskTogether?.length ? (
+              <div>
+                <dt>Ask together</dt>
+                <dd>{f.canAskTogether.join(" · ")}</dd>
+              </div>
+            ) : null}
+            {f.whatToAttach?.length ? (
+              <div>
+                <dt>Take with you</dt>
+                <dd>{f.whatToAttach.join(" · ")}</dd>
+              </div>
+            ) : null}
+          </dl>
+
+          {f.note ? <p className="formcard__note">{f.note}</p> : null}
+          {f.verifyWith ? (
+            <p className="formcard__verify">Confirm with: {f.verifyWith}</p>
+          ) : null}
+          {f.forIssue ? (
+            <p className="formcard__verify">Also applies to: {f.forIssue}</p>
+          ) : null}
+        </div>
+      ))}
+      <p className="graphnote">
+        These describe the application and where it goes. The prescribed form is set by each State and
+        changes — ask the court or the legal aid desk for the current one before you file.
+      </p>
+    </Panel>
   );
 }
 
@@ -1026,10 +1201,12 @@ function LegalResearch({ data, meta, group, onGroupChange, act, onActChange }) {
 
       <Notice tone="info" title="How these were matched">
         <p>
-          Sparse TF-IDF retrieval over a bundled corpus, then filtered to the statute families that
-          apply to the issue types detected in your narrative. This is keyword-level matching, not a
-          model reading your case and deciding what applies. A weak match is labelled weak, and a
-          provision that is central to the issue type is marked as such even if the wording barely
+          Two retrievers run over the same bundled corpus and their scores are blended. The first is
+          sparse TF-IDF, which is exact about statutory wording. The second is a 384-dimension
+          multilingual sentence-embedding model, which scores meaning — so a narrative that never uses
+          the word &ldquo;cruelty&rdquo; can still reach the section about cruelty. Neither reads your case and
+          decides what applies; both are matching over a fixed corpus. A weak match is labelled weak,
+          and a provision central to the issue type is marked as such even if the wording barely
           overlaps.
         </p>
       </Notice>
@@ -1122,6 +1299,12 @@ function LegalResearch({ data, meta, group, onGroupChange, act, onActChange }) {
               </Empty>
             )}
           </Panel>
+
+          {data.forms?.length ? <FormsPanel forms={data.forms} meta={meta} /> : null}
+
+          {data.crossForms?.length ? <FormsPanel forms={data.crossForms} meta={meta} /> : null}
+
+          <CrossStatuteGraph graph={data.graph} />
 
           <Panel title="Our knowledge base" icon="info">
             <p style={{ fontSize: "0.84rem", color: "var(--ink-soft)", marginBottom: 10 }}>

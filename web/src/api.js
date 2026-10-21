@@ -113,7 +113,19 @@ export const api = {
 
   judgment: (id) => request(`/judgments/${encodeURIComponent(id)}`),
 
-  search: (q) => request(`/search?q=${encodeURIComponent(q)}`),
+  search: (q, mode) =>
+    request(`/search?q=${encodeURIComponent(q)}${mode ? `&mode=${encodeURIComponent(mode)}` : ""}`),
+
+  graph: ({ provisions, category } = {}) => {
+    const qs = new URLSearchParams();
+    if (provisions?.length) qs.set("provisions", provisions.join(","));
+    if (category) qs.set("category", category);
+    const s = qs.toString();
+    return request(`/graph${s ? `?${s}` : ""}`);
+  },
+
+  forms: (category) =>
+    request(`/forms${category ? `?category=${encodeURIComponent(category)}` : ""}`),
 
   extractPdf: async (file, onProgress) => {
     const form = new FormData();
