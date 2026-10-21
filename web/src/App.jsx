@@ -5,6 +5,7 @@ import Landing from "./views/Landing.jsx";
 import Intake from "./views/Intake.jsx";
 import Sources from "./views/Sources.jsx";
 import PdfPanel from "./views/PdfPanel.jsx";
+import FindLawyer from "./views/FindLawyer.jsx";
 import {
   ActionPlan,
   AiBadge,
@@ -99,6 +100,16 @@ function TopBar({ route, go, health, hasCase, onReset }) {
             />
             {label}
           </span>
+          <a
+            className="btn btn--quiet btn--sm"
+            href="#lawyers"
+            onClick={(e) => {
+              e.preventDefault();
+              go("lawyers");
+            }}
+          >
+            Find a Lawyer
+          </a>
           <a
             className="btn btn--quiet btn--sm"
             href="#intake"
@@ -352,7 +363,10 @@ function Workspace({ data, form, meta, samples, go, onReset, onToast }) {
    ------------------------------------------------------------------------- */
 
 export default function App() {
-  const [route, go] = useHashRoute();
+  const [routeWithQuery, go] = useHashRoute();
+  // Query strings stay in the hash so a link can prefill directory filters
+  // without adding a routing dependency.
+  const route = routeWithQuery.split("?")[0];
 
   const [meta, setMeta] = useState(null);
   const [health, setHealth] = useState(null);
@@ -526,6 +540,8 @@ export default function App() {
           onToast={showToast}
         />
       ) : null}
+
+      {route === "lawyers" ? <FindLawyer meta={meta} /> : null}
 
       {route === "sources" ? (
         <Sources meta={meta} health={health} onBack={() => go("home")} />

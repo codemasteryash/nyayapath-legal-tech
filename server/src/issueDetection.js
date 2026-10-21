@@ -12,7 +12,7 @@ const CUES = {
   child: /\b(?:child|children|minor|daughter|son|under 18|बच्चा|बच्ची|बालिका)\b/i,
   confinement: /\b(?:detain(?:ed|tion)?|confine(?:d|ment)?|locked (?:me )?(?:in|up)|kidnap(?:ped)?|abduct(?:ed)?|held (?:me )?against)\b/i,
   taking: /\b(?:took|taken|taking|snatch(?:ed|ing)?|loot(?:ed|ing)?)\b/i,
-  property: /\b(?:phone|mobile|wallet|purse|bag|chain|jewell?ery|money|cash|watch|vehicle|scooter|bicycle|cycle|bike|car|property|belongings)\b/i,
+  property: /\b(?:phone|mobile|wallet|purse|bag|chain|jewell?ery|money|cash|watch|vehicle|scooter|bicycle|cycle|bike|car|computer|laptop|desktop|tablet|device|electronics?|property|belongings)\b/i,
   threat: /\b(?:threat(?:en(?:ed|ing|s)?)?|dhamki|धमकी|धमकाया|scared me|warned me|kill me|hurt me)\b/i,
   weapon: /\b(?:weapon|knife|knifepoint|gun|gunpoint|pistol|blade|rod)\b/i,
   force: /\b(?:force(?:d|ful)?|grabb(?:ed|ing)|pinned|held me|shov(?:ed)?)\b/i,
@@ -45,7 +45,7 @@ const ISSUES = [
     categoryIds: ["property"],
     searchTerms: ["theft", "stolen property", "dishonestly misappropriating property", "took property"],
     cueNames: ["theft", "taking", "property"],
-    clarify: "What exactly was taken, from where, and did anyone see it happen?",
+    clarify: "What exactly was taken, from where, and was any force or threat used?",
     evaluate(m) {
       if (m.theft) return 4;
       if (m.taking && m.property) return 3;

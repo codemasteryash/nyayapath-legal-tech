@@ -17,6 +17,30 @@ import * as issueDetection from "./issueDetection.js";
 import * as llm from "./llm.js";
 
 const NEW_CRIMINAL_LAW_FROM = "2024-07-01";
+const MIN_SECONDARY_CATEGORY_SCORE = 3;
+
+const GENERIC_TOPIC_TERMS = new Set([
+  "act",
+  "case",
+  "court",
+  "domestic",
+  "family",
+  "friend",
+  "home",
+  "house",
+  "household",
+  "law",
+  "legal",
+  "matter",
+  "money",
+  "order",
+  "person",
+  "police",
+  "property",
+  "section",
+  "state",
+  "woman",
+]);
 
 const CATEGORY_ALIASES = {
   harassment: "harassment",
@@ -263,6 +287,75 @@ function categoriesOf(rec) {
   return rec?.category ? [rec.category] : [];
 }
 
+function normaliseTopicText(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function topicTermsFor(rec, kind) {
+  const fields =
+    kind === "judgment"
+      ? [rec?.signalTerms]
+      : [rec?.keywords, rec?.signalTerms];
+  return fields
+    .flatMap((field) => (Array.isArray(field) ? field : [field]))
+    .map(normaliseTopicText)
+    .filter((term) => term.length >= 3 && !GENERIC_TOPIC_TERMS.has(term));
+}
+
+function isTopicallyRelevant(rec, context, kind = "provision") {
+  const haystack = normaliseTopicText(context);
+  if (!haystack) return false;
+  return topicTermsFor(rec, kind).some((term) => haystack.includes(term));
+}
+
+function robberyTitleCaveat(title, detectedIssues) {
+  const titleMentionsRobbery = /\b(?:robbery|robbed|robbing)\b/i.test(String(title || ""));
+  if (!titleMentionsRobbery) return null;
+  if ((detectedIssues || []).some((issue) => issue.id === "robbery")) return null;
+  return "The title mentions robbery, but the narrative does not provide enough facts for a robbery candidate, which requires force or a threat used to take property. Robbery is not assumed from the title; the taking is treated here as theft unless the narrative says otherwise.";
+}
+
+const ACTION_PLAN_ISSUE_ALIASES = {
+  robbery: "theft",
+};
+
+function actionPlanKeyFor(detectedIssues, researchCategories, primaryId) {
+  const hasTemplate = (id) => Boolean(id) && (kb.action_template(id) || []).length > 0;
+  for (const issue of detectedIssues || []) {
+    for (const id of [issue.id, ACTION_PLAN_ISSUE_ALIASES[issue.id]]) {
+      if (hasTemplate(id)) return { key: id, kind: "issue" };
+    }
+  }
+  const category = (researchCategories || []).find((rec) => hasTemplate(rec.id));
+  if (category) return { key: category.id, kind: "category" };
+  return { key: primaryId, kind: "category" };
+}
+
+function researchCategoryRecords(resolved, primaryId, detectedIssues) {
+  const classified = new Map(resolved.map((rec) => [rec.id, rec]));
+  const ids = detectedIssues.length
+    ? detectedIssues.flatMap((issue) => issue.categoryIds || [])
+    : [primaryId];
+  return [...new Set(ids)]
+    .map((id) => {
+      if (classified.has(id)) return classified.get(id);
+      const record = kb.category_by_id(id);
+      if (!record) return null;
+      return {
+        id,
+        label: record.label,
+        score: null,
+        matchedSignals: [],
+        reason: "Matched from the narrative",
+        record,
+      };
+    })
+    .filter(Boolean);
+}
+
 function mergeRetrieved(groups) {
   const merged = new Map();
   for (const { results, source } of groups) {
@@ -318,6 +411,7 @@ function buildRetrievalCoverage({
   judgmentNote,
   applicabilityInfo,
   selectedMismatch,
+  contextWarning,
 }) {
   const strong = provisions.filter((p) => p.relevance === "strong").length;
   const core = provisions.filter((p) => p.relevance === "core-for-this-issue").length;
@@ -345,7 +439,8 @@ function buildRetrievalCoverage({
     warnings.push(
       "Only weak lexical matches were found. Treat them as unconfirmed and add more specific facts before relying on them.",
     );
-  } else if (!detectedIssues.length && strong === 0) {
+  }
+  if (!detectedIssues.length && strong === 0 && !retrievalNote) {
     warnings.push(
       "No candidate legal issue could be identified from the narrative, and only weak or category-default provisions were found. Add what was done, by whom, and when before relying on this material.",
     );
@@ -355,6 +450,7 @@ function buildRetrievalCoverage({
   }
   if (applicabilityInfo?.corpusCoverageGap) warnings.push(applicabilityInfo.corpusCoverageGap);
   if (selectedMismatch) warnings.push(selectedMismatch);
+  if (contextWarning) warnings.push(contextWarning);
 
   return {
     status,
@@ -396,6 +492,7 @@ export async function analyse(rawInput) {
   const detectedIssues = issueDetection.detectIssues(text);
   const issueCategoryIds = issueDetection.categoryIdsFor(detectedIssues);
   const issueRetrievalTerms = issueDetection.retrievalTerms(detectedIssues);
+  const titleCaveat = robberyTitleCaveat(input.title, detectedIssues);
 
   // --- Classification -------------------------------------------------------
   let detected = [];
@@ -408,8 +505,11 @@ export async function analyse(rawInput) {
 
   const primaryId = input.category;
   const primary = kb.category_by_id(primaryId);
+  const materialDetected = detected.filter(
+    (d) => d.id === primaryId || Number(d.score) >= MIN_SECONDARY_CATEGORY_SCORE,
+  );
   const resolved = [];
-  for (const d of detected) {
+  for (const d of materialDetected) {
     const rec = kb.category_by_id(d.id);
     if (rec) resolved.push({ ...d, record: rec });
   }
@@ -426,21 +526,24 @@ export async function analyse(rawInput) {
     });
   }
 
+  // --- Legal research focus ------------------------------------------------
+  const researchCategories = researchCategoryRecords(resolved, primaryId, detectedIssues);
+  const issueIds = resolved.map((r) => r.id);
+  const supportedCategoryIds = [...new Set([...issueIds, ...issueCategoryIds])];
+  const retrievalCategoryIds = detectedIssues.length ? issueCategoryIds : [primaryId];
+
   // --- Facts ---------------------------------------------------------------
-  const categoryKeywords = resolved.flatMap((r) => r.record?.keywords || []);
+  const categoryKeywords = researchCategories.flatMap((r) => r.record?.keywords || []);
   const facts = extract.extractFacts(text, categoryKeywords);
 
   // --- Evidence ------------------------------------------------------------
-  const evidence = mapEvidence(resolved);
+  const evidence = mapEvidence(researchCategories);
   const likelyHeld = evidenceHintsFromNarrative(text, evidence);
   for (const item of evidence) {
     item.suggestedHeld = likelyHeld.has(item.item);
   }
 
-  // --- Legal research ------------------------------------------------------
-  const issueIds = resolved.map((r) => r.id);
-  const supportedCategoryIds = [...new Set([...issueIds, ...issueCategoryIds])];
-  const retrievalCategoryIds = detectedIssues.length ? issueCategoryIds : issueIds;
+  // --- Legal research (continued) -----------------------------------------
   const coreCategoryIds = new Set(
     issueIds.filter((id) => retrievalCategoryIds.includes(id)),
   );
@@ -469,6 +572,20 @@ export async function analyse(rawInput) {
     resolved.map((r) => r.record?.label).join(" "),
     detectedIssues.map((i) => i.label).join(" "),
   ].join(" ");
+  const provisionTopicContext = [
+    input.title,
+    text,
+    ...detectedIssues.flatMap((issue) => [
+      issue.label,
+      ...(issue.searchTerms || []),
+      ...(issue.matchedTerms || []),
+    ]),
+  ].join(" ");
+  const judgmentTopicContext = [
+    input.title,
+    text,
+    ...detectedIssues.map((issue) => issue.label),
+  ].join(" ");
 
   const [provRes, categoryProvRes] = await Promise.all([
     retrieval.retrieve({
@@ -496,11 +613,15 @@ export async function analyse(rawInput) {
       : "unavailable";
   if (provRes.ok || categoryProvRes.ok) {
     const narrativeProvisions = (provRes.ok ? provRes.results || [] : []).filter((rec) => {
-      if (!detectedIssues.length) return true;
-      const cats = categoriesOf(rec);
-      return !cats.length || cats.some((c) => retrievalCategoryIds.includes(c));
+      if (detectedIssues.length) {
+        const cats = categoriesOf(rec);
+        if (cats.length && !cats.some((c) => retrievalCategoryIds.includes(c))) return false;
+      }
+      return isTopicallyRelevant(rec, provisionTopicContext);
     });
-    const categoryProvisions = categoryProvRes.ok ? categoryProvRes.results || [] : [];
+    const categoryProvisions = (categoryProvRes.ok ? categoryProvRes.results || [] : []).filter(
+      (rec) => isTopicallyRelevant(rec, provisionTopicContext),
+    );
     provisions = mergeRetrieved([
       { results: narrativeProvisions, source: "narrative" },
       { results: categoryProvisions, source: "selected-or-detected-category" },
@@ -544,7 +665,10 @@ export async function analyse(rawInput) {
   for (const pid of defaultProvisionIds) {
     if (provisions.some((p) => p.id === pid)) continue;
     const rec = kb.provision_by_id(pid);
-    if (rec) core.push(rec);
+    if (!rec) continue;
+    if (!categoriesOf(rec).some((c) => retrievalCategoryIds.includes(c))) continue;
+    if (!isTopicallyRelevant(rec, provisionTopicContext)) continue;
+    core.push(rec);
   }
   if (core.length) {
     const acts = kb.acts();
@@ -595,11 +719,15 @@ export async function analyse(rawInput) {
   let judgmentNote = null;
   if (judgRes.ok || categoryJudgRes.ok) {
     const narrativeJudgments = (judgRes.ok ? judgRes.results || [] : []).filter((rec) => {
-      if (!detectedIssues.length) return true;
-      const cats = categoriesOf(rec);
-      return !cats.length || cats.some((c) => retrievalCategoryIds.includes(c));
+      if (detectedIssues.length) {
+        const cats = categoriesOf(rec);
+        if (cats.length && !cats.some((c) => retrievalCategoryIds.includes(c))) return false;
+      }
+      return isTopicallyRelevant(rec, judgmentTopicContext, "judgment");
     });
-    const categoryJudgments = categoryJudgRes.ok ? categoryJudgRes.results || [] : [];
+    const categoryJudgments = (categoryJudgRes.ok ? categoryJudgRes.results || [] : []).filter(
+      (rec) => isTopicallyRelevant(rec, judgmentTopicContext, "judgment"),
+    );
     judgments = mergeRetrieved([
       { results: narrativeJudgments, source: "narrative" },
       { results: categoryJudgments, source: "selected-or-detected-category" },
@@ -637,9 +765,26 @@ export async function analyse(rawInput) {
   // --- Forms ---------------------------------------------------------------
   // A pro se person needs to know what paper to file, not just which section
   // applies, so the actual applications are surfaced alongside the plan.
-  const forms = kb.forms_for_category(primaryId);
-  const crossForms = resolved
-    .slice(1)
+  const actionPlanSelection = actionPlanKeyFor(detectedIssues, researchCategories, primaryId);
+  const canShowActionPlan = detectedIssues.length > 0 || provisions.length > 0;
+  const selectedPlanCategory = kb.category_by_id(actionPlanSelection.key);
+  let actionPlanNote = null;
+  if (!canShowActionPlan) {
+    actionPlanNote =
+      "No fact-specific action steps are shown because the narrative did not support a candidate issue or a relevant provision. Your selected category is kept as context, but it is not enough to choose a safe plan. Add what was done, by whom, and when.";
+  } else if (actionPlanSelection.kind !== "issue" && detectedIssues.length) {
+    actionPlanNote = `The corpus has no issue-specific action template for ${detectedIssues
+      .map((issue) => issue.label)
+      .join(", ")}. The steps shown come from the closest supported category${
+      selectedPlanCategory ? ` (${selectedPlanCategory.label})` : ""
+    } and should be checked against your facts.`;
+  }
+  const formCategoryId = selectedPlanCategory
+    ? actionPlanSelection.key
+    : researchCategories[0]?.id || primaryId;
+  const forms = kb.forms_for_category(formCategoryId);
+  const crossForms = researchCategories
+    .filter((r) => r.id !== formCategoryId)
     .flatMap((r) => kb.forms_for_category(r.id).map((f) => ({ ...f, forIssue: r.record.label })));
 
   // --- Hidden facts --------------------------------------------------------
@@ -649,7 +794,7 @@ export async function analyse(rawInput) {
   });
 
   // --- Action plan ---------------------------------------------------------
-  const primaryTemplate = kb.action_template(primaryId) || [];
+  const primaryTemplate = canShowActionPlan ? kb.action_template(actionPlanSelection.key) || [] : [];
   const actionPlan = primaryTemplate.map((step) => {
     const provRefs = (step.authorityRefs || [])
       .map((id) => kb.provision_by_id(id))
@@ -722,6 +867,7 @@ export async function analyse(rawInput) {
     judgmentNote,
     applicabilityInfo,
     selectedMismatch,
+    contextWarning: titleCaveat,
   });
   const retrievalWarning = retrievalCoverage.warning || null;
   const issueDetectionConfidence = detectedIssues.length
@@ -755,6 +901,7 @@ export async function analyse(rawInput) {
     if (issue.corpusSupport?.note) gaps.push(issue.corpusSupport.note);
   }
   if (selectedMismatch) gaps.push(selectedMismatch);
+  if (titleCaveat) gaps.push(titleCaveat);
   if (applicabilityInfo.corpusCoverageGap) gaps.push(applicabilityInfo.corpusCoverageGap);
 
   // --- Optional live model pass -------------------------------------------
@@ -855,10 +1002,12 @@ export async function analyse(rawInput) {
     forms,
     crossForms,
     actionPlan,
+    actionPlanNote,
+    actionPlanSourceId: canShowActionPlan ? actionPlanSelection.key : null,
     crossStatute,
     followUps,
     applicability: applicabilityInfo,
-    referrals: referralsFor(resolved, emergency),
+    referrals: referralsFor(researchCategories, emergency),
     uncertainty,
     retrievalNote,
     disclaimer: kb.disclaimer(),
