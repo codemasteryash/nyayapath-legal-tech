@@ -111,6 +111,10 @@ function Workspace({ data, form, meta, samples, go, onReset, onToast }) {
   const [tab, setTab] = useState("overview");
   const [evidence, setEvidence] = useState(() => new Set());
   const [done, setDone] = useState(() => new Set());
+  const [researchGroup, setResearchGroup] = useState("core");
+  const [researchAct, setResearchAct] = useState("all");
+  const [planStage, setPlanStage] = useState(0);
+  const [planStep, setPlanStep] = useState(null);
 
   const toggleIn = (setter) => (key) =>
     setter((prev) => {
@@ -217,12 +221,31 @@ function Workspace({ data, form, meta, samples, go, onReset, onToast }) {
 
       <main className="ws-body">
         <div className="shell">
-          {tab === "overview" ? <Overview data={data} /> : null}
+          {tab === "overview" ? <Overview data={data} meta={meta} onOpenTab={setTab} /> : null}
           {tab === "timeline" ? (
             <TimelineEvidence data={data} checked={evidence} onToggleEvidence={toggleEvidence} />
           ) : null}
-          {tab === "research" ? <LegalResearch data={data} meta={meta} /> : null}
-          {tab === "plan" ? <ActionPlan data={data} done={done} onToggle={toggleDone} /> : null}
+          {tab === "research" ? (
+            <LegalResearch
+              data={data}
+              meta={meta}
+              group={researchGroup}
+              onGroupChange={setResearchGroup}
+              act={researchAct}
+              onActChange={setResearchAct}
+            />
+          ) : null}
+          {tab === "plan" ? (
+            <ActionPlan
+              data={data}
+              done={done}
+              onToggle={toggleDone}
+              stage={planStage}
+              onStageChange={setPlanStage}
+              stepKey={planStep}
+              onStepSelect={setPlanStep}
+            />
+          ) : null}
           {tab === "documents" ? (
             <>
               <Notice tone="info" title="Bring your own documents">

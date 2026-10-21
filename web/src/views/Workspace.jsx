@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, Meter, Notice, Panel, Tag, Empty } from "../ui.jsx";
 
 function AiBadge({ llm, compact }) {
@@ -132,196 +132,522 @@ function AiBlock({ llm }) {
    Tab 1 — Overview
    ========================================================================== */
 
-function Overview({ data }) {
-  const { summary, classification, facts, uncertainty, applicability, stats, language, llm } = data;
+function EvidenceCompass({ data, meta, onOpenTab }) {
+  const provisions = data.provisions || [];
+  const judgments = data.judgments || [];
+  const evidence = data.evidence || [];
+  const strong = provisions.filter(
+    (p) => p.relevance === "core-for-this-issue" || p.relevance === "strong",
+  ).length;
+  const mentioned = evidence.filter((e) => e.suggestedHeld).length;
+  const topProvision = provisions[0];
+  const topJudgment = judgments[0];
+  const lastReviewed = meta?.provisionsMeta?.lastReviewed;
+  const liveAi = data.llm?.mode === "ai" && data.llm?.ok;
 
   return (
-    <div className="grid-2">
-      <div>
-        <Panel title="Case summary" icon="doc" sub="Assembled from your own words only">
-          <p style={{ fontSize: "0.94rem", lineHeight: 1.66, color: "var(--ink)" }}>
-            {summary.aiSummary || summary.opening}
+    <aside className="compass" aria-labelledby="compass-title">
+      <div className="compass__head">
+        <span className="compass__eyebrow">Evidence compass</span>
+        <h3 id="compass-title">What this case drew on</h3>
+        <p>Bundled corpus records, not conclusions about your case.</p>
+      </div>
+
+      <dl className="compass__counts">
+        <div>
+          <dt>Provisions</dt>
+          <dd>
+            {provisions.length}
+            <small>{strong ? `${strong} core or strong` : "no strong match"}</small>
+          </dd>
+        </div>
+        <div>
+          <dt>Judgments</dt>
+          <dd>
+            {judgments.length}
+            <small>{judgments.length ? "citation search linked" : "none matched"}</small>
+          </dd>
+        </div>
+        <div>
+          <dt>Evidence</dt>
+          <dd>
+            {evidence.length}
+            <small>{mentioned ? `${mentioned} mentioned in account` : "checklist only"}</small>
+          </dd>
+        </div>
+      </dl>
+
+      {topProvision || topJudgment ? (
+        <div className="compass__retrieved">
+          <p className="compass__label">
+            <Tag tone="strong">Retrieved</Tag> From the corpus
           </p>
-
-          {summary.aiSummary ? (
-            <p style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginTop: 0 }}>
-              <Tag tone="strong">Machine paraphrase</Tag>{" "}
-              {llm?.notices?.[0] ||
-                "Restates the facts you entered. No section, citation or deadline is taken from this text."}
-            </p>
+          {topProvision ? (
+            <a
+              className="compass__source"
+              href={topProvision.sourceUrl || undefined}
+              target={topProvision.sourceUrl ? "_blank" : undefined}
+              rel={topProvision.sourceUrl ? "noreferrer" : undefined}
+            >
+              <b>
+                {topProvision.actShortTitle || topProvision.act}, s. {topProvision.section}
+              </b>
+              <span>{topProvision.heading}</span>
+            </a>
           ) : null}
+          {topJudgment ? (
+            <a
+              className="compass__source"
+              href={topJudgment.verifyUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <b>{topJudgment.title}</b>
+              <span>
+                {topJudgment.citation} · verify citation ↗
+              </span>
+            </a>
+          ) : null}
+        </div>
+      ) : null}
 
-          <dl
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
-              gap: 14,
-              margin: "16px 0 0",
-              padding: "14px 16px",
-              background: "var(--ivory-100)",
-              borderRadius: "var(--radius)",
-            }}
-          >
-            {[
-              ["Issue type", summary.issueType],
-              ["Language", language.label],
-              ["Narrative", `${stats.words} words, ${stats.sentences} sentences`],
-              [
-                "Dated events",
-                `${data.timeline.total} found${data.timeline.uncertainCount ? `, ${data.timeline.uncertainCount} uncertain` : ""}`,
-              ],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <dt
-                  style={{
-                    fontSize: "0.68rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.09em",
-                    color: "var(--ink-faint)",
-                    marginBottom: 2,
-                  }}
-                >
-                  {k}
-                </dt>
-                <dd style={{ margin: 0, fontSize: "0.855rem", color: "var(--navy-800)", fontWeight: 500 }}>
-                  {v}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </Panel>
+      <div className="compass__verify">
+        <p className="compass__label">
+          <Tag tone="warn">Not verified</Tag> For this case
+        </p>
+        <ul>
+          <li>Source authenticity and current legal text were not re-checked during this analysis.</li>
+          <li>Whether a provision applies to your facts has not been assessed by a lawyer.</li>
+          <li>
+            {liveAi
+              ? "AI explanations are machine-generated and not lawyer-reviewed."
+              : "Deterministic output: corpus records only; no model was used."}
+          </li>
+        </ul>
+      </div>
 
-        <Panel
-          title="Important facts identified"
-          icon="layers"
-          sub="Every line below is a sentence from your narrative. Nothing has been added to your account."
-          right={<Tag tone="plain">{facts.length} of {stats.sentences} sentences</Tag>}
-          flush
-        >
-          {facts.length ? (
-            <div>
-              {facts.map((f, i) => (
-                <div className="fact" key={i}>
-                  <span className="fact__rank">{String(i + 1).padStart(2, "0")}</span>
-                  <div>
-                    <p className="fact__text">{f.text}</p>
-                    <p className="fact__why">
-                      {f.why} · relevance {Math.round(f.relevance * 100)}%
-                    </p>
-                  </div>
+      <div className="compass__foot">
+        <span>
+          {lastReviewed
+            ? `Corpus last reviewed ${lastReviewed}; not re-checked for this case.`
+            : "Corpus records were not re-verified for this case."}
+        </span>
+        <button className="brief-link" type="button" onClick={() => onOpenTab("research")}>
+          Open legal research <Icon name="arrow" size={13} />
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function Overview({ data, meta, onOpenTab }) {
+  const { summary, classification, facts, uncertainty, applicability, stats, language, llm } = data;
+  const [supportOpen, setSupportOpen] = useState(false);
+  const supportRef = useRef(null);
+
+  useEffect(() => {
+    const beforePrint = () => {
+      if (supportRef.current) supportRef.current.open = true;
+      setSupportOpen(true);
+    };
+    window.addEventListener("beforeprint", beforePrint);
+    return () => window.removeEventListener("beforeprint", beforePrint);
+  }, []);
+
+  function revealSupport() {
+    setSupportOpen(true);
+    window.requestAnimationFrame(() => {
+      supportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  const topFacts = facts.slice(0, 3);
+  const topProvisions = data.provisions.slice(0, 3);
+  const nextSteps = data.actionPlan.slice(0, 4);
+  const sourceCount = data.provisions.length + data.judgments.length;
+
+  return (
+    <>
+      <section className="brief no-print" aria-label="Case briefing">
+        <div className="brief-summary">
+          <div className="brief-summary__main">
+            <p className="brief-summary__eyebrow">Situation summary</p>
+            <h2 className="brief-summary__title">{summary.headline}</h2>
+            <p className="brief-summary__text">{summary.aiSummary || summary.opening}</p>
+
+            {summary.aiSummary ? (
+              <p className="brief-summary__disclaimer">
+                <Tag tone="strong">Machine paraphrase</Tag>{" "}
+                {llm?.notices?.[0] ||
+                  "Restates the facts you entered. No section, citation or deadline is taken from this text."}
+              </p>
+            ) : null}
+
+            <dl className="brief-meta">
+              {[
+                ["Issue", summary.issueType],
+                ["Place", data.input.location || "Not given"],
+                [
+                  "Timeline",
+                  `${data.timeline.total} dated event${data.timeline.total === 1 ? "" : "s"}${
+                    data.timeline.uncertainCount ? ` · ${data.timeline.uncertainCount} to check` : ""
+                  }`,
+                ],
+                ["Coverage", uncertainty.reliability.label],
+              ].map(([k, v]) => (
+                <div key={k}>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
                 </div>
               ))}
+            </dl>
+
+            <div className="brief-summary__tools">
+              <button className="btn btn--primary btn--sm" type="button" onClick={() => onOpenTab("plan")}>
+                Go to action plan <Icon name="arrow" size={13} />
+              </button>
+              <button className="btn btn--ghost btn--sm" type="button" onClick={() => onOpenTab("research")}>
+                View legal sources
+              </button>
+              <AiBadge llm={llm} compact />
             </div>
-          ) : (
-            <Empty title="No facts could be extracted">
-              The narrative was too short or too general. Add what was done, by whom, and when.
-            </Empty>
-          )}
-        </Panel>
+          </div>
 
-        <Panel title="How this issue was classified" icon="search" sub="Issue types matched against your narrative">
-          {classification.map((c) => (
-            <div
-              key={c.id}
-              style={{
-                padding: "13px 0",
-                borderBottom: "1px solid var(--ivory-200)",
-                display: "flex",
-                gap: 14,
-                alignItems: "flex-start",
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontWeight: 600, color: "var(--navy-800)", fontSize: "0.9rem" }}>
-                  {c.label} <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>{c.labelHi}</span>
-                </p>
-                <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "var(--ink-soft)" }}>
-                  {c.reason}
-                  {c.matchedSignals?.length ? ` — matched: ${c.matchedSignals.join(", ")}` : ""}
-                </p>
-                <p style={{ margin: "3px 0 0", fontSize: "0.77rem", color: "var(--ink-faint)" }}>
-                  Forum: {c.forum}
-                </p>
-              </div>
-              {c.score !== null && c.score !== undefined ? (
-                <Tag tone={c.score >= 4 ? "strong" : "moderate"}>score {c.score}</Tag>
-              ) : (
-                <Tag tone="core">your choice</Tag>
-              )}
-            </div>
-          ))}
-        </Panel>
-      </div>
+          <EvidenceCompass data={data} meta={meta} onOpenTab={onOpenTab} />
+        </div>
 
-      <div>
-        <Panel title="How well we could cover this" icon="clock" sub="Our own assessment, not a guarantee">
-          <Meter
-            score={uncertainty.reliability.score}
-            band={uncertainty.reliability.band}
-            label={uncertainty.reliability.label}
-          />
-          <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginTop: 12, marginBottom: 8 }}>
-            {uncertainty.reliability.explanation}
-          </p>
-          <ul className="factors">
-            {uncertainty.reliability.factors.map((f, i) => (
-              <li key={i}>{f}</li>
-            ))}
-          </ul>
-        </Panel>
+        <div className="brief-grid">
+          <section className="brief-card">
+            <header className="brief-card__head">
+              <span className="brief-card__label">Key findings</span>
+              <span className="brief-card__count">{facts.length} from your account</span>
+            </header>
+            {topFacts.length ? (
+              <ol className="brief-list">
+                {topFacts.map((f, i) => (
+                  <li key={i}>
+                    <span className="brief-list__n">{String(i + 1).padStart(2, "0")}</span>
+                    <div>
+                      <p className="brief-list__text">{f.text}</p>
+                      <span className="brief-list__meta">
+                        relevance {Math.round(f.relevance * 100)}%
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-empty">No facts could be extracted from this account.</p>
+            )}
+            <button className="brief-link" type="button" onClick={revealSupport}>
+              See all facts and analysis <Icon name="arrow" size={13} />
+            </button>
+          </section>
 
-        <Panel title="What we could not establish" icon="alert">
-          {uncertainty.gaps.length ? (
-            <ul className="gaps">
-              {uncertainty.gaps.map((g, i) => (
-                <li key={i}>{g}</li>
-              ))}
-            </ul>
-          ) : (
-            <p style={{ fontSize: "0.86rem", color: "var(--ink-soft)", margin: 0 }}>
-              Nothing material was missing from the narrative.
-            </p>
-          )}
-        </Panel>
-
-        {applicability?.note ? (
-          <Panel title="Which law applies" icon="scale">
-            <p style={{ fontSize: "0.865rem", color: "var(--ink-soft)", margin: 0, lineHeight: 1.62 }}>
-              {applicability.note}
-            </p>
-          </Panel>
-        ) : null}
-
-        <Panel title="Where to go" icon="route">
-          {classification.slice(0, 2).map((c) => (
-            <div key={c.id} style={{ marginBottom: 14 }}>
-              <p style={{ margin: "0 0 3px", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--brass-600)", fontWeight: 600 }}>
-                {c.label}
+          <section className="brief-card">
+            <header className="brief-card__head">
+              <span className="brief-card__label">Legal basis</span>
+              <span className="brief-card__count">
+                {sourceCount} source{sourceCount === 1 ? "" : "s"}
+              </span>
+            </header>
+            {topProvisions.length ? (
+              <ol className="brief-list">
+                {topProvisions.map((p, i) => (
+                  <li key={p.id || i}>
+                    <span className="brief-list__n">{String(i + 1).padStart(2, "0")}</span>
+                    <div>
+                      {p.sourceUrl ? (
+                        <a
+                          className="brief-list__text brief-list__link"
+                          href={p.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {p.actShortTitle || p.act}, s. {p.section}
+                        </a>
+                      ) : (
+                        <p className="brief-list__text">
+                          {p.actShortTitle || p.act}, s. {p.section}
+                        </p>
+                      )}
+                      <span className="brief-list__meta">{p.heading}</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-empty">
+                {data.retrievalNote || "No provision in the corpus matched this account."}
               </p>
-              <p style={{ margin: 0, fontSize: "0.865rem", color: "var(--ink-soft)" }}>{c.forum}</p>
-              {c.emergency ? (
-                <p style={{ margin: "6px 0 0", fontSize: "0.8rem", color: "var(--clay-600)" }}>
-                  {c.emergency}
+            )}
+            <button className="brief-link" type="button" onClick={() => onOpenTab("research")}>
+              Open legal research <Icon name="arrow" size={13} />
+            </button>
+          </section>
+
+          <section className="brief-card">
+            <header className="brief-card__head">
+              <span className="brief-card__label">Next steps</span>
+              <span className="brief-card__count">{data.actionPlan.length} in the plan</span>
+            </header>
+            {nextSteps.length ? (
+              <ol className="brief-list brief-list--steps">
+                {nextSteps.map((s) => (
+                  <li key={s.order}>
+                    <span className="brief-list__n">{s.order}</span>
+                    <div>
+                      <p className="brief-list__text">{s.title}</p>
+                      {s.deadline ? (
+                        <span className="brief-list__meta">
+                          {s.deadlineKind === "from-source" ? "Time limit from the statute: " : "On timing: "}
+                          {s.deadline}
+                        </span>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-empty">No action plan is available for this issue type.</p>
+            )}
+            <button className="brief-link" type="button" onClick={() => onOpenTab("plan")}>
+              Open full action plan <Icon name="arrow" size={13} />
+            </button>
+          </section>
+        </div>
+      </section>
+
+      <details
+        className="support"
+        id="supporting-evidence"
+        ref={supportRef}
+        open={supportOpen}
+        onToggle={(e) => setSupportOpen(e.currentTarget.open)}
+      >
+        <summary className="support__summary">
+          <span className="support__chevron">
+            <Icon name="chevron" size={15} />
+          </span>
+          <span className="support__summary-text">
+            <span className="support__title">Supporting evidence and detailed analysis</span>
+            <span className="support__sub">
+              {facts.length} facts · {data.provisions.length} provisions · {data.judgments.length} judgments ·{" "}
+              {data.evidence.length} evidence items · coverage, gaps and forum
+            </span>
+          </span>
+          <span className="support__badges">
+            <Tag tone="plain">{data.timeline.total} dates</Tag>
+            <Tag tone="plain">{language.label}</Tag>
+            <Tag tone="plain">{stats.words} words</Tag>
+          </span>
+        </summary>
+
+        <div className="support__body">
+          <div className="grid-2">
+            <div>
+              <Panel title="Case summary" icon="doc" sub="Assembled from your own words only">
+                <p style={{ fontSize: "0.94rem", lineHeight: 1.66, color: "var(--ink)" }}>
+                  {summary.aiSummary || summary.opening}
                 </p>
-              ) : null}
+
+                {summary.aiSummary ? (
+                  <p style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginTop: 0 }}>
+                    <Tag tone="strong">Machine paraphrase</Tag>{" "}
+                    {llm?.notices?.[0] ||
+                      "Restates the facts you entered. No section, citation or deadline is taken from this text."}
+                  </p>
+                ) : null}
+
+                <dl
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+                    gap: 14,
+                    margin: "16px 0 0",
+                    padding: "14px 16px",
+                    background: "var(--ivory-100)",
+                    borderRadius: "var(--radius)",
+                  }}
+                >
+                  {[
+                    ["Issue type", summary.issueType],
+                    ["Language", language.label],
+                    ["Narrative", `${stats.words} words, ${stats.sentences} sentences`],
+                    [
+                      "Dated events",
+                      `${data.timeline.total} found${data.timeline.uncertainCount ? `, ${data.timeline.uncertainCount} uncertain` : ""}`,
+                    ],
+                  ].map(([k, v]) => (
+                    <div key={k}>
+                      <dt
+                        style={{
+                          fontSize: "0.68rem",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.09em",
+                          color: "var(--ink-faint)",
+                          marginBottom: 2,
+                        }}
+                      >
+                        {k}
+                      </dt>
+                      <dd style={{ margin: 0, fontSize: "0.855rem", color: "var(--navy-800)", fontWeight: 500 }}>
+                        {v}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </Panel>
+
+              <Panel
+                title="Important facts identified"
+                icon="layers"
+                sub="Every line below is a sentence from your narrative. Nothing has been added to your account."
+                right={<Tag tone="plain">{facts.length} of {stats.sentences} sentences</Tag>}
+                flush
+              >
+                {facts.length ? (
+                  <div>
+                    {facts.map((f, i) => (
+                      <div className="fact" key={i}>
+                        <span className="fact__rank">{String(i + 1).padStart(2, "0")}</span>
+                        <div>
+                          <p className="fact__text">{f.text}</p>
+                          <p className="fact__why">
+                            {f.why} · relevance {Math.round(f.relevance * 100)}%
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty title="No facts could be extracted">
+                    The narrative was too short or too general. Add what was done, by whom, and when.
+                  </Empty>
+                )}
+              </Panel>
+
+              <Panel title="How this issue was classified" icon="search" sub="Issue types matched against your narrative">
+                {classification.map((c) => (
+                  <div
+                    key={c.id}
+                    style={{
+                      padding: "13px 0",
+                      borderBottom: "1px solid var(--ivory-200)",
+                      display: "flex",
+                      gap: 14,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontWeight: 600, color: "var(--navy-800)", fontSize: "0.9rem" }}>
+                        {c.label} <span style={{ color: "var(--ink-faint)", fontWeight: 400 }}>{c.labelHi}</span>
+                      </p>
+                      <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "var(--ink-soft)" }}>
+                        {c.reason}
+                        {c.matchedSignals?.length ? ` — matched: ${c.matchedSignals.join(", ")}` : ""}
+                      </p>
+                      <p style={{ margin: "3px 0 0", fontSize: "0.77rem", color: "var(--ink-faint)" }}>
+                        Forum: {c.forum}
+                      </p>
+                    </div>
+                    {c.score !== null && c.score !== undefined ? (
+                      <Tag tone={c.score >= 4 ? "strong" : "moderate"}>score {c.score}</Tag>
+                    ) : (
+                      <Tag tone="core">your choice</Tag>
+                    )}
+                  </div>
+                ))}
+              </Panel>
             </div>
-          ))}
-        </Panel>
 
-        {data.uncertainty.aiUncertainty ? (
-          <Notice tone="warn" title="Additional uncertainty flagged by the model">
-            <p>{data.uncertainty.aiUncertainty}</p>
-          </Notice>
-        ) : null}
+            <div>
+              <Panel title="How well we could cover this" icon="clock" sub="Our own assessment, not a guarantee">
+                <Meter
+                  score={uncertainty.reliability.score}
+                  band={uncertainty.reliability.band}
+                  label={uncertainty.reliability.label}
+                />
+                <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginTop: 12, marginBottom: 8 }}>
+                  {uncertainty.reliability.explanation}
+                </p>
+                <ul className="factors">
+                  {uncertainty.reliability.factors.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              </Panel>
 
-        <Notice tone="info" title="Before you use this">
-          <p>
-            A match between a provision and your facts is a starting point, not a conclusion. Courts
-            decide these questions on evidence, and a lawyer has to weigh what we have not read.
-          </p>
-        </Notice>
-      </div>
-    </div>
+              <Panel title="What we could not establish" icon="alert">
+                {uncertainty.gaps.length ? (
+                  <ul className="gaps">
+                    {uncertainty.gaps.map((g, i) => (
+                      <li key={i}>{g}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ fontSize: "0.86rem", color: "var(--ink-soft)", margin: 0 }}>
+                    Nothing material was missing from the narrative.
+                  </p>
+                )}
+              </Panel>
+
+              {applicability?.note ? (
+                <Panel title="Which law applies" icon="scale">
+                  <p style={{ fontSize: "0.865rem", color: "var(--ink-soft)", margin: 0, lineHeight: 1.62 }}>
+                    {applicability.note}
+                  </p>
+                </Panel>
+              ) : null}
+
+              <Panel title="Where to go" icon="route">
+                {classification.slice(0, 2).map((c) => (
+                  <div key={c.id} style={{ marginBottom: 14 }}>
+                    <p style={{ margin: "0 0 3px", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--brass-600)", fontWeight: 600 }}>
+                      {c.label}
+                    </p>
+                    <p style={{ margin: 0, fontSize: "0.865rem", color: "var(--ink-soft)" }}>{c.forum}</p>
+                    {c.emergency ? (
+                      <p style={{ margin: "6px 0 0", fontSize: "0.8rem", color: "var(--clay-600)" }}>
+                        {c.emergency}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </Panel>
+
+              {data.uncertainty.aiUncertainty ? (
+                <Notice tone="warn" title="Additional uncertainty flagged by the model">
+                  <p>{data.uncertainty.aiUncertainty}</p>
+                </Notice>
+              ) : null}
+
+              <Notice tone="info" title="Before you use this">
+                <p>
+                  A match between a provision and your facts is a starting point, not a conclusion. Courts
+                  decide these questions on evidence, and a lawyer has to weigh what we have not read.
+                </p>
+              </Notice>
+            </div>
+          </div>
+
+          <div className="support__tabs">
+            <button className="btn btn--ghost btn--sm" type="button" onClick={() => onOpenTab("timeline")}>
+              Timeline and evidence
+            </button>
+            <button className="btn btn--ghost btn--sm" type="button" onClick={() => onOpenTab("research")}>
+              Provisions and judgments
+            </button>
+            <button className="btn btn--ghost btn--sm" type="button" onClick={() => onOpenTab("plan")}>
+              Action plan and referrals
+            </button>
+            <button className="btn btn--ghost btn--sm" type="button" onClick={() => onOpenTab("documents")}>
+              Documents
+            </button>
+          </div>
+        </div>
+      </details>
+    </>
   );
 }
 
@@ -561,15 +887,134 @@ function ProvisionCard({ p }) {
   );
 }
 
-function LegalResearch({ data, meta }) {
-  const [filter, setFilter] = useState("all");
+const RESEARCH_GROUPS = [
+  {
+    id: "core",
+    label: "Core for this issue",
+    hint: "Central provisions for this issue type",
+    matches: (p) => p.relevance === "core-for-this-issue",
+  },
+  {
+    id: "strong",
+    label: "Strong",
+    hint: "Direct textual matches",
+    matches: (p) => p.relevance === "strong",
+  },
+  {
+    id: "weak",
+    label: "Weak",
+    hint: "Moderate and weak matches, labelled as such",
+    matches: (p) => p.relevance !== "core-for-this-issue" && p.relevance !== "strong",
+  },
+];
+
+function JudgmentCard({ j }) {
+  const tone =
+    j.relevance === "strong" ? "strong" : j.relevance === "moderate" ? "moderate" : "weak";
+
+  return (
+    <article className="judg judg--compact">
+      <div className="judg__head">
+        <div>
+          <h4 className="judg__cite">{j.title}</h4>
+          <p className="judg__court">
+            <span>{j.citation}</span>
+            <span>{j.court}</span>
+            <span>{j.year}</span>
+            {j.bench ? <span>{j.bench}</span> : null}
+          </p>
+        </div>
+        <Tag tone={tone}>{j.relevance} match</Tag>
+      </div>
+
+      <div className="judg__block judg__block--compact">
+        <b>Why we surfaced it</b>
+        <p>{j.relevance}</p>
+      </div>
+
+      <details className="judg__more">
+        <summary>Facts, holding and citation check</summary>
+        <div className="judg__more-body">
+          <div className="judg__block">
+            <b>Facts it turned on</b>
+            <p>{j.factsPattern}</p>
+          </div>
+          <div className="judg__block">
+            <b>What the Court held — our paraphrase, not its words</b>
+            <p>{j.holding}</p>
+          </div>
+          {j.aiWhy ? (
+            <div className="judg__block">
+              <b>How this may relate to your facts — machine-generated</b>
+              <p>{j.aiWhy}</p>
+            </div>
+          ) : null}
+        </div>
+      </details>
+
+      <div className="judg__foot">
+        <a href={j.verifyUrl} target="_blank" rel="noreferrer">
+          Verify this citation ↗
+        </a>
+        <span style={{ color: "var(--ink-faint)" }}>text match {j.score?.toFixed(3)}</span>
+      </div>
+    </article>
+  );
+}
+
+function LegalResearch({ data, meta, group, onGroupChange, act, onActChange }) {
+  const tabRefs = useRef({});
+  const groupCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        RESEARCH_GROUPS.map((g) => [g.id, data.provisions.filter(g.matches).length]),
+      ),
+    [data.provisions],
+  );
+
+  const groupProvisions = useMemo(() => {
+    const selected = RESEARCH_GROUPS.find((g) => g.id === group) || RESEARCH_GROUPS[0];
+    return data.provisions.filter(selected.matches);
+  }, [data.provisions, group]);
+
   const actsUsed = useMemo(() => {
-    const set = new Set(data.provisions.map((p) => p.act));
+    const set = new Set(groupProvisions.map((p) => p.act));
     return [...set];
-  }, [data.provisions]);
+  }, [groupProvisions]);
+
+  useEffect(() => {
+    if (act !== "all" && !groupProvisions.some((p) => p.act === act)) {
+      onActChange("all");
+    }
+  }, [act, groupProvisions, onActChange]);
 
   const shown =
-    filter === "all" ? data.provisions : data.provisions.filter((p) => p.act === filter);
+    act === "all" ? groupProvisions : groupProvisions.filter((p) => p.act === act);
+  const activeGroup = RESEARCH_GROUPS.find((g) => g.id === group) || RESEARCH_GROUPS[0];
+  const hasModerate = shown.some((p) => p.relevance === "moderate");
+
+  function onTabKeyDown(event) {
+    const ids = RESEARCH_GROUPS.map((g) => g.id);
+    const index = ids.indexOf(activeGroup.id);
+    let next = null;
+
+    if (event.key === "ArrowRight") next = ids[(index + 1) % ids.length];
+    else if (event.key === "ArrowLeft") next = ids[(index - 1 + ids.length) % ids.length];
+    else if (event.key === "Home") next = ids[0];
+    else if (event.key === "End") next = ids[ids.length - 1];
+
+    if (next) {
+      event.preventDefault();
+      onGroupChange(next);
+      window.requestAnimationFrame(() => tabRefs.current[next]?.focus());
+    }
+  }
+
+  const emptyCopy = {
+    core: "No provision was marked core for this issue type in the current analysis.",
+    strong: "No strong textual match was retrieved for this account.",
+    weak: "No moderate or weak textual matches were retrieved for this account.",
+  };
 
   return (
     <>
@@ -589,20 +1034,45 @@ function LegalResearch({ data, meta }) {
         </p>
       </Notice>
 
-      <div className="grid-2">
+      <div className="research-tabs" role="tablist" aria-label="Provision match strength">
+        {RESEARCH_GROUPS.map((g) => (
+          <button
+            key={g.id}
+            ref={(el) => {
+              tabRefs.current[g.id] = el;
+            }}
+            id={`research-tab-${g.id}`}
+            type="button"
+            role="tab"
+            aria-selected={activeGroup.id === g.id}
+            aria-controls={`research-panel-${g.id}`}
+            tabIndex={activeGroup.id === g.id ? 0 : -1}
+            className="research-tab"
+            data-on={activeGroup.id === g.id}
+            onClick={() => onGroupChange(g.id)}
+            onKeyDown={onTabKeyDown}
+          >
+            <span className="research-tab__label">{g.label}</span>
+            <span className="research-tab__count">{groupCounts[g.id]}</span>
+            <span className="research-tab__hint">{g.hint}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="grid-2 research-grid">
         <div>
           <Panel
             title="Potentially applicable provisions"
             icon="scale"
-            sub={`${data.provisions.length} sections across ${actsUsed.length} statute${actsUsed.length === 1 ? "" : "s"}`}
+            sub={`${shown.length} in this group across ${actsUsed.length} statute${actsUsed.length === 1 ? "" : "s"}`}
             right={
               actsUsed.length > 1 ? (
-                <div className="langbar">
-                  <button type="button" data-on={filter === "all"} onClick={() => setFilter("all")}>
+                <div className="langbar" aria-label="Filter by statute">
+                  <button type="button" data-on={act === "all"} onClick={() => onActChange("all")}>
                     All
                   </button>
                   {actsUsed.map((a) => (
-                    <button key={a} type="button" data-on={filter === a} onClick={() => setFilter(a)}>
+                    <button key={a} type="button" data-on={act === a} onClick={() => onActChange(a)}>
                       {(meta?.acts?.[a]?.shortTitle || a).split(",")[0].replace("The ", "")}
                     </button>
                   ))}
@@ -611,14 +1081,27 @@ function LegalResearch({ data, meta }) {
             }
             flush
           >
-            {shown.length ? (
-              shown.map((p) => <ProvisionCard key={p.id} p={p} />)
-            ) : (
-              <Empty title="No provision could be matched" icon="book">
-                Nothing in the bundled corpus matched this narrative on the legal families involved.
-                We would rather show nothing than show a provision that does not apply.
-              </Empty>
-            )}
+            <div
+              id={`research-panel-${activeGroup.id}`}
+              role="tabpanel"
+              aria-labelledby={`research-tab-${activeGroup.id}`}
+              tabIndex={0}
+            >
+              {activeGroup.id === "weak" && hasModerate ? (
+                <p className="research-note">
+                  This group includes moderate textual matches. Each card keeps its original match
+                  label; they are kept here so a moderate match is never presented as strong.
+                </p>
+              ) : null}
+
+              {shown.length ? (
+                shown.map((p) => <ProvisionCard key={p.id} p={p} />)
+              ) : (
+                <Empty title="No provisions in this group" icon="book">
+                  {emptyCopy[activeGroup.id]}
+                </Empty>
+              )}
+            </div>
           </Panel>
         </div>
 
@@ -630,48 +1113,7 @@ function LegalResearch({ data, meta }) {
             flush
           >
             {data.judgments.length ? (
-              data.judgments.map((j) => (
-                <article className="judg" key={j.id}>
-                  <h4 className="judg__cite">{j.title}</h4>
-                  <p className="judg__court">
-                    <span>{j.citation}</span>
-                    <span>{j.court}</span>
-                    <span>{j.year}</span>
-                    {j.bench ? <span>{j.bench}</span> : null}
-                  </p>
-
-                  <div className="judg__block">
-                    <b>Facts it turned on</b>
-                    <p>{j.factsPattern}</p>
-                  </div>
-                  <div className="judg__block">
-                    <b>What the Court held — our paraphrase, not its words</b>
-                    <p>{j.holding}</p>
-                  </div>
-                  <div className="judg__block">
-                    <b>Why we surfaced it</b>
-                    <p>{j.relevance}</p>
-                  </div>
-                  {j.aiWhy ? (
-                    <div className="judg__block">
-                      <b>How this may relate to your facts — machine-generated</b>
-                      <p>{j.aiWhy}</p>
-                    </div>
-                  ) : null}
-
-                  <div className="judg__foot">
-                    <Tag tone={j.relevance === "strong" ? "strong" : j.relevance === "moderate" ? "moderate" : "weak"}>
-                      {j.relevance} match
-                    </Tag>
-                    <a href={j.verifyUrl} target="_blank" rel="noreferrer">
-                      Verify this citation ↗
-                    </a>
-                    <span style={{ color: "var(--ink-faint)" }}>
-                      text match {j.score?.toFixed(3)}
-                    </span>
-                  </div>
-                </article>
-              ))
+              data.judgments.map((j) => <JudgmentCard key={j.id} j={j} />)
             ) : (
               <Empty title="No decision in our corpus matched" icon="book">
                 The corpus holds 14 well-known decisions. None matched your fact pattern. We do not
@@ -703,48 +1145,110 @@ function LegalResearch({ data, meta }) {
    Tab 4 — Action plan
    ========================================================================== */
 
-function Step({ step, done, onToggle, isCross }) {
+const PLAN_STAGE_SIZE = 3;
+
+function buildPlanStages(steps) {
+  const stages = [];
+  for (let i = 0; i < steps.length; i += PLAN_STAGE_SIZE) {
+    const group = steps.slice(i, i + PLAN_STAGE_SIZE);
+    const first = group[0];
+    const last = group[group.length - 1];
+    stages.push({
+      id: `plan-stage-${i / PLAN_STAGE_SIZE}`,
+      label:
+        group.length === 1
+          ? `Step ${first.order}`
+          : `Steps ${first.order}–${last.order}`,
+      steps: group,
+    });
+  }
+  return stages;
+}
+
+function PlanStepCard({ step, done, selected, onToggle, onSelect }) {
   return (
-    <article className="step" data-done={String(done)}>
-      <div className="step__rail">
-        <span className="step__n">{done ? <Icon name="check" size={12} /> : step.order}</span>
+    <div className="plan-step" data-done={String(done)} data-on={String(selected)}>
+      <button
+        className="plan-step__open"
+        type="button"
+        onClick={onSelect}
+        aria-current={selected ? "true" : undefined}
+      >
+        <span className="plan-step__n">
+          {done ? <Icon name="check" size={12} /> : step.order}
+        </span>
+        <span className="plan-step__body">
+          <span className="plan-step__title">{step.title}</span>
+          <span className="plan-step__meta">
+            {done
+              ? "Marked done"
+              : step.deadline
+                ? "Timing guidance available"
+                : "Open for full instructions"}
+          </span>
+        </span>
+        <Icon name="chevron" size={14} />
+      </button>
+      <label className="plan-step__check" title={done ? "Undo completion" : "Mark complete"}>
         <input
-          className="step__tick"
           type="checkbox"
           checked={done}
           onChange={() => onToggle(step.title)}
-          aria-label={`Mark step ${step.order} complete`}
+          aria-label={`${done ? "Undo completion of" : "Mark complete"} step ${step.order}`}
         />
+        <span>{done ? "Done" : "Mark"}</span>
+      </label>
+    </div>
+  );
+}
+
+function PlanStepDetail({ step, done, onToggle, isCross }) {
+  return (
+    <aside className="plan-detail" aria-live="polite">
+      <div className="plan-detail__head">
+        <span className="plan-detail__eyebrow">
+          {isCross ? "Related step" : `Step ${step.order}`}
+        </span>
+        <h3>{step.title}</h3>
+        <div>
+          <Tag tone={done ? "strong" : "plain"}>
+            {done ? "Marked done" : "Not marked done"}
+          </Tag>
+        </div>
       </div>
-      <div className="step__body">
-        <h4 className="step__title">{step.title}</h4>
-        {isCross ? (
-          <p style={{ fontSize: "0.74rem", color: "var(--brass-600)", fontWeight: 600, margin: "0 0 7px" }}>
-            Also relevant if this is also a {step.forIssue?.toLowerCase()} matter
-          </p>
-        ) : null}
 
-        <p className="step__why">{step.why}</p>
+      {isCross ? (
+        <p className="plan-detail__cross">
+          Also relevant if this is also a {step.forIssue?.toLowerCase()} matter.
+        </p>
+      ) : null}
 
-        {step.deadline ? (
-          <p className={`deadline${step.deadlineKind === "advisory" ? " deadline--advisory" : ""}`}>
-            <b>
-              {step.deadlineKind === "from-source" ? "Time limit from the statute" : "On timing"}
-            </b>
-            {step.deadline}
-          </p>
-        ) : null}
+      <p className="plan-detail__why">{step.why}</p>
 
-        {step.steps ? <p className="step__sub">{step.steps}</p> : null}
+      {step.deadline ? (
+        <p className={`deadline${step.deadlineKind === "advisory" ? " deadline--advisory" : ""}`}>
+          <b>
+            {step.deadlineKind === "from-source" ? "Time limit from the statute" : "On timing"}
+          </b>
+          {step.deadline}
+        </p>
+      ) : null}
 
-        <dl className="step__dl">
-          <div>
-            <dt>Documents</dt>
-            <dd>{step.evidenceNeeded}</dd>
-          </div>
-        </dl>
+      {step.steps ? (
+        <div className="plan-detail__block">
+          <b>How to do it</b>
+          <p>{step.steps}</p>
+        </div>
+      ) : null}
 
-        {step.provisionRefs?.length || step.channelRefs?.length ? (
+      <div className="plan-detail__block">
+        <b>Documents to bring</b>
+        <p>{step.evidenceNeeded}</p>
+      </div>
+
+      {step.provisionRefs?.length || step.channelRefs?.length ? (
+        <div className="plan-detail__block">
+          <b>Related sources</b>
           <div className="step__refs">
             {step.provisionRefs?.map((r) => (
               <a
@@ -773,25 +1277,90 @@ function Step({ step, done, onToggle, isCross }) {
               </a>
             ))}
           </div>
-        ) : null}
+        </div>
+      ) : null}
+
+      <div className="plan-detail__actions">
+        <button
+          className={done ? "btn btn--ghost btn--sm" : "btn btn--primary btn--sm"}
+          type="button"
+          onClick={() => onToggle(step.title)}
+        >
+          {done ? "Undo completion" : "Mark step complete"}
+        </button>
       </div>
-    </article>
+
+      <p className="plan-detail__note">
+        This only tracks your own progress in this session. It does not file anything or confirm
+        that a legal step has been completed.
+      </p>
+    </aside>
   );
 }
 
-function ActionPlan({ data, done, onToggle }) {
+function CrossStatuteStep({ step, done, onToggle }) {
+  return (
+    <details className="cross-step">
+      <summary>
+        <span>
+          <b>{step.title}</b>
+          <small>
+            {step.forIssue ? `Also relevant: ${step.forIssue}` : "Related issue"} ·{" "}
+            {done ? "marked done" : "not marked done"}
+          </small>
+        </span>
+        <Tag tone={done ? "strong" : "plain"}>{done ? "Done" : "Open"}</Tag>
+      </summary>
+      <div className="cross-step__body">
+        <PlanStepDetail step={step} done={done} onToggle={onToggle} isCross />
+      </div>
+    </details>
+  );
+}
+
+function ActionPlan({ data, done, onToggle, stage, onStageChange, stepKey, onStepSelect }) {
   const completed = data.actionPlan.filter((s) => done.has(s.title)).length;
   const pct = data.actionPlan.length ? Math.round((completed / data.actionPlan.length) * 100) : 0;
+  const stages = useMemo(() => buildPlanStages(data.actionPlan), [data.actionPlan]);
+  const activeIndex = stages.length ? Math.min(Math.max(stage, 0), stages.length - 1) : 0;
+  const currentStage = stages[activeIndex];
+  const activeStep = currentStage
+    ? currentStage.steps.find((s) => s.title === stepKey) || currentStage.steps[0]
+    : null;
+  const stageRefs = useRef({});
+  const stageDone = currentStage
+    ? currentStage.steps.filter((s) => done.has(s.title)).length
+    : 0;
 
   const urgent = data.referrals.filter((r) => ["police-112", "cyber-1930", "childline"].includes(r.id));
 
+  function selectStage(index) {
+    onStageChange(index);
+    onStepSelect(stages[index]?.steps[0]?.title || null);
+  }
+
+  function onStageKeyDown(event) {
+    if (!stages.length) return;
+    let next = null;
+    if (event.key === "ArrowRight") next = (activeIndex + 1) % stages.length;
+    else if (event.key === "ArrowLeft") next = (activeIndex - 1 + stages.length) % stages.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = stages.length - 1;
+
+    if (next !== null) {
+      event.preventDefault();
+      selectStage(next);
+      window.requestAnimationFrame(() => stageRefs.current[next]?.focus());
+    }
+  }
+
   return (
-    <div className="grid-2">
-      <div>
+    <>
+      <div className="no-print">
         <Panel
-          title="Your pro se roadmap"
+          title="Action workspace"
           icon="route"
-          sub={`${completed} of ${data.actionPlan.length} steps marked done`}
+          sub={`${completed} of ${data.actionPlan.length} steps marked done${currentStage ? ` · ${currentStage.label} selected` : ""}`}
           right={
             <div className="meter" style={{ minWidth: 150 }}>
               <div className="meter__bar">
@@ -802,10 +1371,83 @@ function ActionPlan({ data, done, onToggle }) {
           }
           flush
         >
-          {data.actionPlan.length ? (
-            data.actionPlan.map((s) => (
-              <Step key={s.order} step={s} done={done.has(s.title)} onToggle={onToggle} />
-            ))
+          {stages.length ? (
+            <>
+              <div
+                className="stagebar"
+                role="tablist"
+                aria-label="Action plan stages"
+                onKeyDown={onStageKeyDown}
+              >
+                {stages.map((s, i) => {
+                  const doneInStage = s.steps.filter((step) => done.has(step.title)).length;
+                  return (
+                    <button
+                      key={s.id}
+                      ref={(el) => {
+                        stageRefs.current[i] = el;
+                      }}
+                      id={`plan-stage-tab-${i}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === activeIndex}
+                      aria-controls={`plan-stage-panel-${i}`}
+                      tabIndex={i === activeIndex ? 0 : -1}
+                      className="stagebar__tab"
+                      data-on={i === activeIndex}
+                      onClick={() => selectStage(i)}
+                    >
+                      <span className="stagebar__k">Stage {i + 1}</span>
+                      <span className="stagebar__label">{s.label}</span>
+                      <span className="stagebar__count">
+                        {doneInStage}/{s.steps.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div
+                className="plan-workspace"
+                id={`plan-stage-panel-${activeIndex}`}
+                role="tabpanel"
+                aria-labelledby={`plan-stage-tab-${activeIndex}`}
+              >
+                <div className="plan-steps">
+                  <div className="plan-steps__head">
+                    <div>
+                      <p className="plan-steps__eyebrow">Stage {activeIndex + 1}</p>
+                      <h3>{currentStage.label}</h3>
+                    </div>
+                    <span className="plan-steps__count">
+                      {stageDone}/{currentStage.steps.length} done
+                    </span>
+                  </div>
+                  {currentStage.steps.map((step) => (
+                    <PlanStepCard
+                      key={step.title}
+                      step={step}
+                      done={done.has(step.title)}
+                      selected={activeStep?.title === step.title}
+                      onToggle={onToggle}
+                      onSelect={() => onStepSelect(step.title)}
+                    />
+                  ))}
+                </div>
+
+                {activeStep ? (
+                  <PlanStepDetail
+                    step={activeStep}
+                    done={done.has(activeStep.title)}
+                    onToggle={onToggle}
+                  />
+                ) : (
+                  <Empty title="Choose a step">
+                    Select a step to read its full instructions.
+                  </Empty>
+                )}
+              </div>
+            </>
           ) : (
             <Empty title="No action plan for this issue type yet">
               Choose a category at intake and a plan will be produced from the corpus.
@@ -814,22 +1456,38 @@ function ActionPlan({ data, done, onToggle }) {
         </Panel>
 
         {data.crossStatute?.length ? (
-          <Panel
-            title="If this is also another kind of problem"
-            icon="layers"
-            sub="Because more than one issue type matched your narrative"
-            flush
-          >
-            {data.crossStatute.map((s) => (
-              <Step key={s.title} step={s} done={done.has(s.title)} onToggle={onToggle} isCross />
-            ))}
-          </Panel>
+          <details className="plan-extra">
+            <summary>
+              <span>
+                <b>If this is also another kind of problem</b>
+                <small>
+                  {data.crossStatute.length} related step
+                  {data.crossStatute.length === 1 ? "" : "s"} because more than one issue type matched
+                </small>
+              </span>
+              <Icon name="chevron" size={15} />
+            </summary>
+            <div className="plan-extra__body">
+              {data.crossStatute.map((s) => (
+                <CrossStatuteStep
+                  key={s.title}
+                  step={s}
+                  done={done.has(s.title)}
+                  onToggle={onToggle}
+                />
+              ))}
+            </div>
+          </details>
         ) : null}
       </div>
 
-      <div>
-        <Panel title="Where to get help" icon="phone" sub="Free, and available to anyone entitled under the Legal Services Authorities Act, 1987">
-          <div className="refs" style={{ margin: "-20px -20px -20px" }}>
+      <div className="plan-bottom">
+        <Panel
+          title="Where to get help"
+          icon="phone"
+          sub="Free, and available to anyone entitled under the Legal Services Authorities Act, 1987"
+        >
+          <div className="refs refs--grid">
             {urgent.map((r) => (
               <div className="ref ref--urgent" key={r.id}>
                 <div>
@@ -861,23 +1519,59 @@ function ActionPlan({ data, done, onToggle }) {
           </div>
         </Panel>
 
-        <Notice tone="warn" title="One thing we will not do">
-          <p>
-            We will not print a deadline that no source states. Where a period matters and our corpus
-            does not fix one, the step says so and tells you who to ask. A wrong date printed
-            confidently is worse than an honest gap.
-          </p>
-        </Notice>
+        <div>
+          <Notice tone="warn" title="One thing we will not do">
+            <p>
+              We will not print a deadline that no source states. Where a period matters and our
+              corpus does not fix one, the step says so and tells you who to ask. A wrong date
+              printed confidently is worse than an honest gap.
+            </p>
+          </Notice>
 
-        <Notice tone="info" title="Take this with you">
-          <p>
-            Print this page and take it to a lawyer or a Legal Services Authority volunteer. The
-            printed dossier includes the provisions, the decisions and the evidence list, with the
-            source links written out in full.
-          </p>
-        </Notice>
+          <Notice tone="info" title="Take this with you">
+            <p>
+              Print this page and take it to a lawyer or a Legal Services Authority volunteer. The
+              printed dossier includes the provisions, the decisions and the evidence list, with the
+              source links written out in full.
+            </p>
+          </Notice>
+        </div>
       </div>
-    </div>
+
+      <div className="print-only plan-print">
+        <h2>Action plan</h2>
+        {data.actionPlan.map((s) => (
+          <section key={s.title}>
+            <h3>
+              Step {s.order}. {s.title}
+            </h3>
+            <p>{s.why}</p>
+            {s.steps ? (
+              <p>
+                <b>How: </b>
+                {s.steps}
+              </p>
+            ) : null}
+            <p>
+              <b>Documents: </b>
+              {s.evidenceNeeded}
+            </p>
+            {s.deadline ? (
+              <p>
+                <b>Timing: </b>
+                {s.deadline}
+              </p>
+            ) : null}
+            {s.provisionRefs?.length ? (
+              <p>
+                <b>Related sources: </b>
+                {s.provisionRefs.map((r) => r.label).join("; ")}
+              </p>
+            ) : null}
+          </section>
+        ))}
+      </div>
+    </>
   );
 }
 
