@@ -332,16 +332,17 @@ function extractJson(text) {
   }
 }
 
-async function callProvider(c, messages, { timeoutMs, jsonMode }) {
+async function callProvider(c, messages, { timeoutMs, jsonMode, model = null, temperature = 0.2, maxTokens = 2000 } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    const targetModel = model || c.model;
     const body = {
-      model: c.model,
+      model: targetModel,
       messages,
-      temperature: 0.2,
-      max_tokens: 2000,
+      temperature,
+      max_tokens: maxTokens,
     };
     if (jsonMode) body.response_format = { type: "json_object" };
 
@@ -372,7 +373,11 @@ async function callProvider(c, messages, { timeoutMs, jsonMode }) {
         message: "The provider returned an empty completion.",
       };
     }
-    return { ok: true, content, usage: data?.usage || null, model: data?.model || c.model };
+    let parsed = null;
+    if (jsonMode) {
+      parsed = parseJson(content);
+    }
+    return { ok: true, content, data: parsed, usage: data?.usage || null, model: data?.model || targetModel };
   } catch (err) {
     if (err?.name === "AbortError") {
       return {
@@ -391,6 +396,25 @@ async function callProvider(c, messages, { timeoutMs, jsonMode }) {
     clearTimeout(timer);
   }
 }
+
+/**
+ * General-purpose chat completion with safe fallbacks and bounded timeouts.
+ */
+export async function chatCompletion({
+  model = null,
+  messages = [],
+  temperature = 0.2,
+  maxTokens = 2000,
+  jsonMode = true,
+  timeoutMs = 15000,
+} = {}) {
+  const c = config();
+  if (!c.ready) {
+    return { ok: false, error: "not_configured", message: "LLM is not enabled or configured" };
+  }
+  return callProvider(c, messages, { timeoutMs, jsonMode, model, temperature, maxTokens });
+}
+
 
 /**
  * Hard caps on the model call.

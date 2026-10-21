@@ -168,4 +168,86 @@ export const api = {
       xhr.send(form);
     });
   },
-};
+
+  // Case-scoped stateful workflows
+  createCase: (payload) =>
+    request("/cases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }),
+
+  listCases: () => request("/cases"),
+
+  getCase: (caseId) => request(`/cases/${encodeURIComponent(caseId)}`),
+
+  deleteCase: (caseId) =>
+    request(`/cases/${encodeURIComponent(caseId)}`, {
+      method: "DELETE",
+    }),
+
+  getConversation: (caseId) => request(`/cases/${encodeURIComponent(caseId)}/conversation`),
+
+  intakeChat: (payload) =>
+    request("/intake/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      timeoutMs: 35000,
+    }),
+
+  sendMessage: (caseId, payload) =>
+    request(`/cases/${encodeURIComponent(caseId)}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }),
+
+  runCaseAnalysis: (caseId) =>
+    request(`/cases/${encodeURIComponent(caseId)}/analysis`, {
+      method: "POST",
+      timeoutMs: 45000,
+    }),
+
+  runOpponentSimulation: (caseId, customScenario = null) =>
+    request(`/cases/${encodeURIComponent(caseId)}/opponent-simulation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customScenario }),
+      timeoutMs: 35000,
+    }),
+
+  getOpponentSimulation: (caseId) =>
+    request(`/cases/${encodeURIComponent(caseId)}/opponent-simulation`),
+
+  runResearch: (caseId, query) =>
+    request(`/cases/${encodeURIComponent(caseId)}/research`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+      timeoutMs: 30000,
+    }),
+
+  correctFact: (caseId, factId, correctedStatement) =>
+    request(`/cases/${encodeURIComponent(caseId)}/facts/${encodeURIComponent(factId)}/corrections`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correctedStatement }),
+    }),
+
+  getCaseActionPlan: (caseId) =>
+    request(`/cases/${encodeURIComponent(caseId)}/action-plan`),
+
+  toggleActionItem: (caseId, itemId, isCompleted) =>
+    request(`/cases/${encodeURIComponent(caseId)}/action-plan/items/${encodeURIComponent(itemId)}/toggle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isCompleted }),
+    }),
+
+  runWorkflow: (caseId) =>
+    request(`/cases/${encodeURIComponent(caseId)}/workflow`, {
+      method: "POST",
+      timeoutMs: 25000,
+    }),
+};

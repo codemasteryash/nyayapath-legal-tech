@@ -26,6 +26,22 @@ import * as analysis from "./analysis.js";
 import * as pdf from "./pdf.js";
 import * as llm from "./llm.js";
 import { extractDates, extractFacts, buildTimeline, detectLanguage, splitSentences } from "./extract.js";
+import {
+  usersRepo,
+  casesRepo,
+  messagesRepo,
+  factsRepo,
+  timelineRepo,
+  opponentRepo,
+  researchRepo,
+  actionPlanRepo,
+  auditRepo,
+  documentsRepo,
+} from "./db.js";
+import { classifyIntake, processUserTurn, getNextIntakeStep } from "./intakeAgent.js";
+import { runOpponentSimulation } from "./opponentAgent.js";
+import { runLegalResearch } from "./researchAgent.js";
+import { generateActionPlan } from "./actionAgent.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const app = express();
@@ -205,6 +221,512 @@ app.post("/api/analyze", async (req, res, next) => {
 app.post("/api/validate", (req, res) => {
   const result = analysis.validateIntake(req.body || {});
   res.json(result);
+});
+
+// ---------------------------------------------------------------------------
+// Stateful Case Management & Agentic Workflows
+// ---------------------------------------------------------------------------
+
+function getAuthUser(req) {
+  const userId = req.headers["x-user-id"] || "litigant_demo";
+  usersRepo.getOrCreate(userId);
+  return userId;
+}
+
+/** 1. Create a case & initiate conversational intake */
+app.post("/api/cases", async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const { title, narrative, category, jurisdiction, language } = req.body || {};
+
+    const initialTitle = (title || "").trim() || (narrative ? narrative.slice(0, 60) + "..." : "New Legal Matter");
+    let initialCategory = category || null;
+
+    // If category not given but narrative is present, run fast classification
+    let classification = null;
+    if (narrative && narrative.trim().length >= 10) {
+      classification = await classifyIntake(narrative);
+      if (!initialCategory && classification?.primaryCategory) {
+        initialCategory = classification.primaryCategory;
+      }
+    }
+
+    const newCase = casesRepo.create({
+      userId,
+      title: initialTitle,
+      category: initialCategory,
+      jurisdiction: jurisdiction || "India",
+      language: language || (classification?.language?.code) || "en",
+    });
+
+    // If initial narrative provided, store it and extract initial turn
+    if (narrative && narrative.trim().length >= 10) {
+      messagesRepo.add({
+        conversationId: newCase.conversationId,
+        caseId: newCase.id,
+        sender: "user",
+        content: narrative.trim(),
+      });
+      processUserTurn(newCase.id, narrative.trim());
+    }
+
+    const nextStep = await getNextIntakeStep(newCase.id);
+
+    // Save assistant's opening/follow-up question
+    if (nextStep?.question) {
+      messagesRepo.add({
+        conversationId: newCase.conversationId,
+        caseId: newCase.id,
+        sender: "assistant",
+        content: nextStep.question,
+        stepTag: nextStep.status,
+      });
+    }
+
+    return res.status(201).json({
+      ok: true,
+      case: casesRepo.get(newCase.id, userId),
+      classification,
+      nextIntakeStep: nextStep,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 2. List cases for authenticated user */
+app.get("/api/cases", (req, res) => {
+  const userId = getAuthUser(req);
+  const cases = casesRepo.listByUser(userId);
+  res.json({ total: cases.length, cases });
+});
+
+/** 3. Get full case state with facts, timeline, active plan & documents */
+app.get("/api/cases/:caseId", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const facts = factsRepo.list(caseObj.id);
+  const timeline = timelineRepo.list(caseObj.id);
+  const documents = documentsRepo.list(caseObj.id);
+  const activePlan = actionPlanRepo.getActive(caseObj.id);
+  const latestOpponent = opponentRepo.getLatest(caseObj.id);
+  const researchRuns = researchRepo.list(caseObj.id);
+
+  res.json({
+    ok: true,
+    case: caseObj,
+    facts,
+    timeline,
+    documents,
+    activePlan,
+    latestOpponent,
+    researchCount: researchRuns.length,
+  });
+});
+
+/** 3b. Delete a case workspace */
+app.delete("/api/cases/:caseId", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const deleted = casesRepo.delete(caseObj.id, userId);
+  res.json({ ok: true, deleted, caseId: caseObj.id });
+});
+
+/** 4. Get conversation history */
+app.get("/api/cases/:caseId/conversation", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const messages = messagesRepo.list(caseObj.conversationId);
+  res.json({ ok: true, caseId: caseObj.id, conversationId: caseObj.conversationId, messages });
+});
+
+/** 4b. Pre-workspace intake chat with Python Senior Advocate RAG Agent */
+app.post("/api/intake/chat", async (req, res, next) => {
+  try {
+    const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
+    const newText = String(req.body?.newText || "").trim();
+    const category = req.body?.category || "auto";
+    const jurisdiction = req.body?.jurisdiction || "India";
+
+    const agentRes = await retrieval.chatAdvocate({
+      messages,
+      newText,
+      category,
+      jurisdiction,
+    });
+
+    if (agentRes && agentRes.ok) {
+      return res.json(agentRes);
+    }
+
+    res.json({
+      ok: true,
+      reply: "I have reviewed your statement. Under Indian procedure, we must examine your documentary receipts and verify the opposing party details.",
+      category: category === "auto" ? "civil-other" : category,
+      extractedFacts: newText ? [newText] : [],
+      timelineDates: [],
+      readinessScore: 50,
+      evidenceChecklist: ["Original receipt or invoice", "Written correspondence"],
+      readyForAnalysis: false,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 5. Post message & get adaptive response via Python Senior Advocate Agent */
+app.post("/api/cases/:caseId/messages", async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const caseObj = casesRepo.get(req.params.caseId, userId);
+    if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+    const content = String(req.body?.content || "").trim();
+    if (!content) return res.status(400).json({ error: "content_required" });
+
+    // Store user message
+    messagesRepo.add({
+      conversationId: caseObj.conversationId,
+      caseId: caseObj.id,
+      sender: "user",
+      content,
+    });
+
+    // If user provided a category explicitly via message or selection
+    if (req.body?.selectedCategory && kb.category_by_id(req.body.selectedCategory)) {
+      casesRepo.update(caseObj.id, { category: req.body.selectedCategory }, userId);
+    }
+
+    // Process turn: facts, timeline, corrections, skips
+    processUserTurn(caseObj.id, content);
+
+    // Call the Advanced Python Legal RAG Agent
+    const conversationHistory = messagesRepo.list(caseObj.conversationId).map((m) => ({
+      sender: m.sender,
+      text: m.content,
+    }));
+
+    let advocateResult = null;
+    try {
+      advocateResult = await retrieval.chatAdvocate({
+        messages: conversationHistory,
+        newText: content,
+        category: req.body?.selectedCategory || caseObj.category,
+        jurisdiction: caseObj.jurisdiction || "India",
+      });
+    } catch (err) {
+      console.warn("Advocate RAG agent error:", err.message);
+    }
+
+    let assistantContent = advocateResult?.reply;
+    if (!assistantContent) {
+      // Fallback to adaptive question step if agent fails
+      const nextStep = await getNextIntakeStep(caseObj.id);
+      assistantContent = nextStep?.question || "I have noted your statement for the case record.";
+    }
+
+    // Sync extracted facts from the smart agent
+    if (advocateResult?.extractedFacts?.length) {
+      const existingFacts = factsRepo.list(caseObj.id).map((f) => f.statement);
+      for (const st of advocateResult.extractedFacts) {
+        if (!existingFacts.includes(st)) {
+          factsRepo.add({
+            caseId: caseObj.id,
+            statement: st,
+            sourceType: "user_statement",
+            verificationStatus: "allegation",
+          });
+        }
+      }
+    }
+
+    // Auto-update category if detected
+    if (advocateResult?.category && advocateResult.category !== "civil-other" && (!caseObj.category || caseObj.category === "civil-other")) {
+      casesRepo.update(caseObj.id, { category: advocateResult.category }, userId);
+    }
+
+    // Store assistant response
+    const assistantMsg = messagesRepo.add({
+      conversationId: caseObj.conversationId,
+      caseId: caseObj.id,
+      sender: "assistant",
+      content: assistantContent,
+      stepTag: "counsel_analysis",
+    });
+
+    res.json({
+      ok: true,
+      message: assistantMsg,
+      reply: assistantContent,
+      category: advocateResult?.category || caseObj.category,
+      activeFacts: factsRepo.list(caseObj.id),
+      timeline: timelineRepo.list(caseObj.id),
+      readinessScore: advocateResult?.readinessScore || 70,
+      readyForAnalysis: advocateResult?.readyForAnalysis !== undefined ? advocateResult.readyForAnalysis : true,
+      nextIntakeStep: {
+        question: assistantContent,
+        status: "in_progress",
+        readyForAnalysis: true,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 6. Upload evidence document associated with a case */
+app.post("/api/cases/:caseId/documents", upload.single("file"), async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const caseObj = casesRepo.get(req.params.caseId, userId);
+    if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+    if (!req.file) {
+      return res.status(400).json({ error: "file_required", detail: "Please attach a PDF document." });
+    }
+
+    const parsed = await pdf.extractPdf(req.file.buffer, req.file.originalname);
+    if (!parsed.ok) {
+      return res.status(parsed.code === "not_a_pdf" ? 415 : 422).json(parsed);
+    }
+
+    // Save document record
+    const doc = documentsRepo.add({
+      caseId: caseObj.id,
+      filename: req.file.originalname,
+      mimeType: req.file.mimetype,
+      sizeBytes: req.file.size,
+      extractedText: parsed.text,
+      pageCount: parsed.pages || 1,
+    });
+
+    // Extract dates & facts from uploaded document
+    const dates = extractDates(parsed.text);
+    if (dates.length) {
+      const existing = timelineRepo.list(caseObj.id);
+      const updated = [...existing];
+      for (const d of dates) {
+        if (!updated.some((e) => e.event_date === d.iso)) {
+          updated.push({
+            iso: d.iso,
+            text: d.text,
+            description: `Document (${req.file.originalname}): ${parsed.text.slice(0, 100)}...`,
+            confidence: d.needsReview ? 0.7 : 1.0,
+          });
+        }
+      }
+      timelineRepo.sync(caseObj.id, updated);
+    }
+
+    // Extract facts from document
+    const extractedCues = extractFacts(parsed.text, kb.categories().flatMap((c) => c.keywords || []), { limit: 5 });
+    for (const f of extractedCues.facts) {
+      factsRepo.add({
+        caseId: caseObj.id,
+        statement: f.fact,
+        sourceType: "document",
+        sourceRef: doc.id,
+        verificationStatus: "corroborated",
+        confidence: 0.9,
+      });
+    }
+
+    res.status(201).json({
+      ok: true,
+      document: doc,
+      extractedDates: dates,
+      extractedFacts: extractedCues.facts,
+      timelineTotal: timelineRepo.list(caseObj.id).length,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 7. List documents for a case */
+app.get("/api/cases/:caseId/documents", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const docs = documentsRepo.list(caseObj.id);
+  res.json({ total: docs.length, documents: docs });
+});
+
+/** 8. Run full legal analysis on established case facts */
+app.post("/api/cases/:caseId/analysis", async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const caseObj = casesRepo.get(req.params.caseId, userId);
+    if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+    const activeFacts = factsRepo.list(caseObj.id);
+    const timeline = timelineRepo.list(caseObj.id);
+
+    const narrative = activeFacts.map((f) => f.statement).join(". ");
+    const earliestDate = timeline.find((t) => t.event_date)?.event_date || null;
+
+    const analysisInput = {
+      title: caseObj.title,
+      narrative: narrative.length >= 60 ? narrative : `${narrative}. Case matter under category ${caseObj.category}.`,
+      category: caseObj.category || "civil-other",
+      location: caseObj.jurisdiction || "India",
+      startDate: earliestDate,
+      language: caseObj.language || "en",
+    };
+
+    const analysisResult = await analysis.analyse(analysisInput);
+
+    // Automatically generate procedural action plan
+    const actionPlan = generateActionPlan(caseObj.id);
+
+    res.json({
+      ok: true,
+      caseId: caseObj.id,
+      analysis: analysisResult,
+      actionPlan,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 9. Run courtroom opponent simulation */
+app.post("/api/cases/:caseId/opponent-simulation", async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const caseObj = casesRepo.get(req.params.caseId, userId);
+    if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+    const customScenario = req.body?.customScenario || null;
+    const sim = await runOpponentSimulation(caseObj.id, { customScenario });
+
+    res.json({ ok: true, simulation: sim });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 10. Get latest opponent simulation */
+app.get("/api/cases/:caseId/opponent-simulation", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const latest = opponentRepo.getLatest(caseObj.id);
+  res.json({ ok: true, simulation: latest });
+});
+
+/** 11. Run dynamic legal research */
+app.post("/api/cases/:caseId/research", async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const caseObj = casesRepo.get(req.params.caseId, userId);
+    if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+    const query = String(req.body?.query || caseObj.title).trim();
+    const run = await runLegalResearch(caseObj.id, query);
+
+    res.json({ ok: true, research: run });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** 12. List research runs */
+app.get("/api/cases/:caseId/research", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const runs = researchRepo.list(caseObj.id);
+  res.json({ total: runs.length, researchRuns: runs });
+});
+
+/** 13. Correct a fact & invalidate downstream plans */
+app.post("/api/cases/:caseId/facts/:factId/corrections", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const correctedStatement = String(req.body?.correctedStatement || "").trim();
+  if (!correctedStatement) {
+    return res.status(400).json({ error: "correctedStatement_required" });
+  }
+
+  const result = factsRepo.correctFact({
+    caseId: caseObj.id,
+    factId: req.params.factId,
+    correctedStatement,
+    reason: req.body?.reason || "user_manual_correction",
+  });
+
+  if (!result) return res.status(404).json({ error: "fact_not_found" });
+
+  res.json({
+    ok: true,
+    result,
+    activeFacts: factsRepo.list(caseObj.id),
+    caseVersion: casesRepo.get(caseObj.id).case_version,
+    notice: "Fact updated. Downstream plans and opponent simulations have been invalidated and marked for refresh.",
+  });
+});
+
+/** 14. Get active action plan */
+app.get("/api/cases/:caseId/action-plan", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  let plan = actionPlanRepo.getActive(caseObj.id);
+  if (!plan) {
+    plan = generateActionPlan(caseObj.id);
+  }
+  res.json({ ok: true, actionPlan: plan });
+});
+
+/** 15. Toggle action plan item completion */
+app.post("/api/cases/:caseId/action-plan/items/:itemId/toggle", (req, res) => {
+  const userId = getAuthUser(req);
+  const caseObj = casesRepo.get(req.params.caseId, userId);
+  if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+  const isCompleted = Boolean(req.body?.isCompleted);
+  actionPlanRepo.toggleItem(req.params.itemId, isCompleted);
+  res.json({ ok: true, itemId: req.params.itemId, isCompleted });
+});
+
+/** 16. Trigger LangGraph workflow directly */
+app.post("/api/cases/:caseId/workflow", async (req, res, next) => {
+  try {
+    const userId = getAuthUser(req);
+    const caseObj = casesRepo.get(req.params.caseId, userId);
+    if (!caseObj) return res.status(404).json({ error: "case_not_found" });
+
+    const activeFacts = factsRepo.list(caseObj.id);
+    const narrative = activeFacts.map((f) => f.statement).join(". ");
+
+    const workflowPayload = {
+      case_id: caseObj.id,
+      case_version: caseObj.case_version,
+      title: caseObj.title,
+      narrative: narrative || caseObj.title,
+      category: caseObj.category,
+      jurisdiction: caseObj.jurisdiction || "India",
+      language: caseObj.language || "en",
+    };
+
+    const wfRes = await retrieval.runLangGraphWorkflow(workflowPayload);
+    res.json(wfRes);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ---------------------------------------------------------------------------

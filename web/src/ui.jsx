@@ -24,6 +24,7 @@ export function Icon({ name, size = 16, strokeWidth = 1.6 }) {
     phone: "M6 3h3l2 5-2.5 1.5a12 12 0 006 6L16 13l5 2v3a2 2 0 01-2 2A16 16 0 014 5a2 2 0 012-2z",
     info: "M12 3a9 9 0 100 18 9 9 0 000-18zm0 5v.5M12 11v6",
     arrow: "M5 12h13m-5-5l5 5-5 5",
+    trash: "M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6",
   };
   return (
     <svg

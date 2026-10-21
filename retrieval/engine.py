@@ -1045,6 +1045,22 @@ def op_provision_record(payload: dict) -> dict:
     return {"ok": True, "provision": out}
 
 
+def op_workflow(payload: dict) -> dict:
+    try:
+        from workflow import run_workflow
+        return run_workflow(payload)
+    except Exception as exc:
+        return {"ok": False, "error": "workflow_failed", "detail": str(exc)}
+
+
+def op_advocate_chat(payload: dict) -> dict:
+    try:
+        from legal_agent import handle_advocate_turn
+        return handle_advocate_turn(payload)
+    except Exception as exc:
+        return {"ok": False, "error": "advocate_chat_failed", "detail": str(exc)}
+
+
 def handle(payload: dict) -> dict:
     op = payload.get("op")
     if op == "health":
@@ -1057,6 +1073,10 @@ def handle(payload: dict) -> dict:
         return op_graph(payload)
     if op == "provision_record":
         return op_provision_record(payload)
+    if op == "workflow":
+        return op_workflow(payload)
+    if op == "advocate_chat":
+        return op_advocate_chat(payload)
     return {"ok": False, "error": "unknown_op", "op": op}
 
 

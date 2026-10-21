@@ -45,6 +45,7 @@ function spawnEngine() {
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   });
+  proc.unref();
 
   proc.stdout.setEncoding("utf8");
   proc.stdout.on("data", (chunk) => {
@@ -179,6 +180,14 @@ export async function graph({ provisionIds = [], category = null } = {}) {
 
 export async function provisionRecord(id) {
   return request({ op: "provision_record", id });
+}
+
+export async function runLangGraphWorkflow(payload) {
+  return request({ op: "workflow", ...payload }, { timeoutMs: 15000 });
+}
+
+export async function chatAdvocate(payload, { timeoutMs = 30000 } = {}) {
+  return request({ op: "advocate_chat", ...payload }, { timeoutMs });
 }
 
 export function shutdown() {

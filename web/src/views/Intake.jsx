@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api.js";
 import { Icon, Notice, Tag } from "../ui.jsx";
 import PdfPanel from "./PdfPanel.jsx";
@@ -154,25 +154,52 @@ async function submit(e) {
 
   return (
     <>
-      <main className="section">
+      <main className="section" style={{ paddingTop: 24, background: "var(--noir-950)", minHeight: "92vh" }}>
         <div className="shell">
-          <div style={{ marginBottom: 26 }}>
-            <button className="btn btn--quiet btn--sm" onClick={onBack} type="button">
-              Back
-            </button>
-            <h1 style={{ marginTop: 12, marginBottom: 8 }}>Tell us what happened</h1>
-            <p style={{ maxWidth: "62ch", color: "var(--ink-soft)" }}>
-              Nothing is submitted to any court or authority. This text is sent only to the local
-              NyayaPath service to produce your workspace, and is discarded when you close the tab.
-              Use example details rather than real personal information if you are presenting this.
-            </p>
+          <div
+            style={{
+              marginBottom: 26,
+              paddingBottom: 20,
+              borderBottom: "1px solid var(--noir-700)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              flexWrap: "wrap",
+              gap: 16,
+            }}
+          >
+            <div>
+              <span className="badge-note" style={{ marginBottom: 6 }}>
+                [ ENCLAVE FORM: STATUTORY INTAKE &amp; SYNTHESIS ]
+              </span>
+              <h1
+                style={{
+                  fontFamily: "var(--serif)",
+                  fontSize: "2.1rem",
+                  color: "#fff",
+                  margin: "4px 0 8px",
+                  fontWeight: 400,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Deposition &amp; <em>Case Intake</em>
+              </h1>
+              <p style={{ maxWidth: "64ch", color: "var(--linen-300)", margin: 0, fontSize: "0.92rem", lineHeight: 1.6 }}>
+                Structured chronological intake. Grounded in primary enactments without legal hallucination.
+              </p>
+            </div>
+            {onBack ? (
+              <button className="btn btn--outline btn--sm" onClick={onBack} type="button">
+                ← BACK
+              </button>
+            ) : null}
           </div>
 
           <div className="intake">
-            <form className="form-card" onSubmit={submit} noValidate ref={formRef}>
-              <div className="form-card__head">
-                <h2>Case intake</h2>
-                <p>Three short steps. Only the account and the type of problem are required.</p>
+            <form className="form-card" onSubmit={submit} noValidate ref={formRef} style={{ background: "var(--noir-900)", border: "1px solid var(--noir-700)", color: "var(--linen-100)" }}>
+              <div className="form-card__head" style={{ borderBottom: "1px solid var(--noir-700)", background: "var(--noir-950)" }}>
+                <h2 style={{ fontFamily: "var(--serif)", color: "#fff", fontSize: "1.25rem", margin: 0 }}>Statutory Deposition Steps</h2>
+                <p style={{ color: "var(--linen-400)", fontSize: "0.82rem", margin: "4px 0 0" }}>Three concise steps to initialize your canonical legal workspace.</p>
               </div>
 
               <div className="form-body">

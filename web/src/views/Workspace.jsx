@@ -1870,4 +1870,338 @@ export function buildPrintDocument(data, form) {
   return L.join("\n");
 }
 
-export { Overview, TimelineEvidence, LegalResearch, ActionPlan, AiBlock, AiBadge };
+/* -------------------------------------------------------------------------
+   Courtroom Opponent Simulation View
+   ------------------------------------------------------------------------- */
+
+function OpponentSimulationView({ data, onToast }) {
+  const [loading, setLoading] = useState(false);
+  const [simulation, setSimulation] = useState(null);
+  const [scenarioInput, setScenarioInput] = useState("");
+
+  const oppData = simulation || data?.opponentSimulation || null;
+
+  async function runSim(customScenario = null) {
+    setLoading(true);
+    try {
+      // If data.caseId exists or create temp case
+      const payload = {
+        title: data.summary?.headline || data.input?.title || "Legal Dispute",
+        narrative: (data.facts || []).map((f) => f.text || f.statement).join(". ") || data.input?.narrative || "",
+        category: data.classification?.[0]?.id || data.input?.category || "domestic-violence",
+        jurisdiction: data.input?.location || "India",
+      };
+
+      // Call API
+      const caseRes = await fetch("/api/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).then((r) => r.json());
+
+      if (caseRes?.case?.id) {
+        const simRes = await fetch(`/api/cases/${caseRes.case.id}/opponent-simulation`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customScenario }),
+        }).then((r) => r.json());
+
+        if (simRes?.simulation?.report) {
+          setSimulation(simRes.simulation.report);
+          onToast?.("Courtroom opponent simulation generated");
+        }
+      }
+    } catch (err) {
+      onToast?.("Could not run opponent simulation: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 24 }}>
+      <Notice tone="info" title="Courtroom Opponent Simulation Agent">
+        <p>
+          This simulator acts as an aggressive opposing counsel to pressure-test your case. It
+          identifies evidentiary vulnerabilities, anticipates adversarial defenses, and generates
+          challenging cross-examination questions so you can prepare effectively before approaching court.
+        </p>
+      </Notice>
+
+      {!oppData ? (
+        <Panel title="Run Adversarial Case Simulation" icon="scale">
+          <p style={{ color: "var(--ink-soft)", fontSize: "0.92rem", marginBottom: 16 }}>
+            Click below to generate a deep adversarial analysis of your case facts under Indian Law,
+            including evidence admissibility challenges under the Bharatiya Sakshya Adhiniyam, 2023.
+          </p>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <button
+              className="btn btn--brass"
+              onClick={() => runSim()}
+              disabled={loading}
+              type="button"
+            >
+              {loading ? "Simulating Opposing Counsel..." : "Launch Opponent Simulation"}
+            </button>
+          </div>
+        </Panel>
+      ) : (
+        <>
+          {/* Opposing Theory */}
+          <Panel
+            title="Opposing Counsel's Core Theory of the Case"
+            icon="scale"
+            sub="The primary alternative narrative and statutory defenses the other side will argue"
+            right={<Tag tone="danger">Adversarial Position</Tag>}
+          >
+            <div
+              style={{
+                background: "var(--crimson-50, #fff5f5)",
+                borderLeft: "4px solid var(--crimson, #c53030)",
+                padding: "14px 18px",
+                borderRadius: "0 6px 6px 0",
+                fontSize: "0.94rem",
+                lineHeight: 1.6,
+                color: "var(--ink)",
+              }}
+            >
+              <b>Theory:</b> {oppData.opposingTheory}
+            </div>
+          </Panel>
+
+          {/* Vulnerable Facts & Evidence Attacks */}
+          <div className="grid-2">
+            <Panel
+              title="Vulnerable Facts"
+              icon="layers"
+              sub="Statements the defense will challenge"
+              flush
+            >
+              {(oppData.vulnerableFacts || []).map((vf, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "12px 18px",
+                    borderBottom: "1px solid var(--ivory-200)",
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 600, color: "var(--navy-800)" }}>{vf.fact}</p>
+                  <p style={{ margin: "4px 0 0", color: "var(--crimson, #c53030)", fontSize: "0.82rem" }}>
+                    <b>Vulnerability:</b> {vf.vulnerability}
+                  </p>
+                  <p style={{ margin: "3px 0 0", color: "var(--ink-soft)", fontSize: "0.82rem" }}>
+                    <b>Opponent Strategy:</b> {vf.howOpponentWillExploit}
+                  </p>
+                </div>
+              ))}
+            </Panel>
+
+            <Panel
+              title="Evidence Attacks & BSA Admissibility"
+              icon="doc"
+              sub="Evidentiary defects and certification requirements"
+              flush
+            >
+              {(oppData.evidenceAttacks || []).map((ea, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "12px 18px",
+                    borderBottom: "1px solid var(--ivory-200)",
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 600, color: "var(--navy-800)" }}>
+                    Target: {ea.evidenceItem}
+                  </p>
+                  <p style={{ margin: "4px 0 0", color: "var(--crimson, #c53030)", fontSize: "0.82rem" }}>
+                    <b>Defect:</b> {ea.defectOrChallenge}
+                  </p>
+                  <p style={{ margin: "3px 0 0", color: "var(--ink-soft)", fontSize: "0.82rem" }}>
+                    <b>Required Corroboration:</b> {ea.requiredCorroboration}
+                  </p>
+                </div>
+              ))}
+            </Panel>
+          </div>
+
+          {/* Cross Examination Simulator */}
+          <Panel
+            title="Cross-Examination Simulator"
+            icon="clock"
+            sub="Grounded questions an opposing lawyer will ask you during trial"
+          >
+            <div style={{ display: "grid", gap: 14 }}>
+              {(oppData.crossExaminationQuestions || []).map((q, i) => (
+                <div
+                  key={i}
+                  style={{
+                    border: "1px solid var(--ivory-300)",
+                    borderRadius: 8,
+                    padding: 16,
+                    background: "var(--paper)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--ink-faint)" }}>
+                      Target: {q.target}
+                    </span>
+                    <Tag tone={q.dangerLevel === "high" ? "danger" : "brass"}>
+                      {q.dangerLevel === "high" ? "High Danger Question" : "Medium Risk"}
+                    </Tag>
+                  </div>
+                  <p
+                    style={{
+                      margin: "0 0 8px",
+                      fontSize: "0.96rem",
+                      fontWeight: 600,
+                      color: "var(--navy-900)",
+                      fontFamily: "serif",
+                    }}
+                  >
+                    "{q.question}"
+                  </p>
+                  <p style={{ margin: "4px 0", fontSize: "0.84rem", color: "var(--ink-soft)" }}>
+                    <b>Why this matters:</b> {q.whyItMatters}
+                  </p>
+                  <p style={{ margin: "4px 0 0", fontSize: "0.84rem", color: "var(--forest, #2e7d32)" }}>
+                    <b>Preparation Advice:</b> {q.recommendedPreparation}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          {/* Adverse Precedents & Rebuttal Strategies */}
+          <div className="grid-2">
+            <Panel
+              title="Adverse / Contrary Precedents"
+              icon="scale"
+              sub="Judgments that limit or challenge your claim"
+              flush
+            >
+              {(oppData.adversePrecedents || []).map((ap, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "12px 18px",
+                    borderBottom: "1px solid var(--ivory-200)",
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 600, color: "var(--navy-800)" }}>{ap.citation}</p>
+                  <p style={{ margin: "3px 0", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
+                    {ap.principle}
+                  </p>
+                  <p style={{ margin: "3px 0 0", color: "var(--forest, #2e7d32)", fontSize: "0.82rem" }}>
+                    <b>How to distinguish:</b> {ap.distinguishingStrategy}
+                  </p>
+                </div>
+              ))}
+            </Panel>
+
+            <Panel
+              title="Ranked Opponent Move Predictions"
+              icon="route"
+              sub="Plausible procedural maneuvers"
+              flush
+            >
+              {(oppData.opponentMovePredictions || []).map((mp, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "12px 18px",
+                    borderBottom: "1px solid var(--ivory-200)",
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600, color: "var(--navy-800)" }}>
+                      #{mp.rank || i + 1} {mp.move}
+                    </span>
+                    <Tag tone={mp.impact === "critical" ? "danger" : "plain"}>{mp.likelihood}</Tag>
+                  </div>
+                  <p style={{ margin: "3px 0 0", color: "var(--ink-soft)", fontSize: "0.82rem" }}>
+                    <b>Countermeasure:</b> {mp.counterMeasure}
+                  </p>
+                </div>
+              ))}
+            </Panel>
+          </div>
+
+          {/* Scenario Sensitivity Testing ("What If" Analysis) */}
+          <Panel
+            title="Adversarial Scenario Sensitivity Testing ('What If?')"
+            icon="search"
+            sub="Test how your legal viability shifts if specific facts change or evidence is denied"
+          >
+            <div style={{ marginBottom: 14 }}>
+              {oppData.scenarioAnalysis?.assessment ? (
+                <div
+                  style={{
+                    background: "var(--ivory-100)",
+                    padding: 14,
+                    borderRadius: 6,
+                    marginBottom: 14,
+                  }}
+                >
+                  <p style={{ margin: "0 0 6px", fontWeight: 600, fontSize: "0.9rem" }}>
+                    Tested Scenario: {oppData.scenarioAnalysis.scenario}
+                  </p>
+                  <p style={{ margin: "0 0 6px", fontSize: "0.86rem", color: "var(--ink)" }}>
+                    {oppData.scenarioAnalysis.assessment}
+                  </p>
+                  <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--forest, #2e7d32)" }}>
+                    <b>Preparation Priority:</b> {oppData.scenarioAnalysis.preparationPriority}
+                  </p>
+                </div>
+              ) : null}
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <input
+                  type="text"
+                  placeholder="e.g., What if the opponent denies receiving the statutory notice?"
+                  value={scenarioInput}
+                  onChange={(e) => setScenarioInput(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: "9px 12px",
+                    border: "1px solid var(--ivory-300)",
+                    borderRadius: 6,
+                    fontSize: "0.9rem",
+                  }}
+                />
+                <button
+                  className="btn btn--brass btn--sm"
+                  type="button"
+                  disabled={loading || !scenarioInput.trim()}
+                  onClick={() => runSim(scenarioInput)}
+                >
+                  {loading ? "Testing..." : "Test Scenario"}
+                </button>
+              </div>
+            </div>
+          </Panel>
+        </>
+      )}
+    </div>
+  );
+}
+
+export {
+  Overview,
+  TimelineEvidence,
+  LegalResearch,
+  ActionPlan,
+  AiBlock,
+  AiBadge,
+  OpponentSimulationView,
+};
