@@ -152,17 +152,29 @@ export async function retrieve({
   filterCategory = null,
   filterCategories = null,
   minScore = 0.02,
+  mode = "hybrid",
 }) {
-  return request({
-    op: "retrieve",
-    collection,
-    query,
-    topK,
-    boostIds,
-    filterCategory,
-    filterCategories,
-    minScore,
-  });
+  return request(
+    {
+      op: "retrieve",
+      collection,
+      query,
+      topK,
+      boostIds,
+      filterCategory,
+      filterCategories,
+      minScore,
+      mode,
+    },
+    // The first dense call may still be waiting on the embedding model to load,
+    // so give it longer than the sparse path before reporting a timeout.
+    { timeoutMs: mode === "sparse" ? 6000 : 25000 },
+  );
+}
+
+/** Cross-statute graph around a set of provisions, or the whole graph. */
+export async function graph({ provisionIds = [], category = null } = {}) {
+  return request({ op: "graph", provisionIds, category }, { timeoutMs: 12000 });
 }
 
 export async function provisionRecord(id) {

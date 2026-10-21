@@ -107,20 +107,43 @@ export function extractDates(text) {
     hits.push({ text: raw.trim(), iso, kind, needsReview });
   };
 
+  // Character ranges already claimed by a full date. A bare year inside one of
+  // these belongs to that date rather than standing on its own, so "12 May 2023"
+  // yields 2023-05-12 and not a second, phantom event on 1 January 2023.
+  const fullDateSpans = [];
+  const claimSpan = (match, iso) => {
+    if (iso) fullDateSpans.push([match.index, match.index + match[0].length]);
+  };
+
   // 12 April 2026 / 12th April 2026
   const reMonthFirst = new RegExp(
     "\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(" + Object.keys(MONTHS).join("|") +
     ")[a-z]*\\s+(\\d{4})\\b", "gi");
   let m;
   while ((m = reMonthFirst.exec(text))) {
-    push(m[0], isoFromParts(+m[3], MONTHS[m[2].toLowerCase()], +m[1]), "day-month-year", false);
+    const iso = isoFromParts(+m[3], MONTHS[m[2].toLowerCase()], +m[1]);
+    push(m[0], iso, "day-month-year", false);
+    claimSpan(m, iso);
   }
 
   // April 12, 2026
   const reDayFirst = new RegExp(
     "\\b(" + Object.keys(MONTHS).join("|") + ")[a-z]*\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})\\b", "gi");
   while ((m = reDayFirst.exec(text))) {
-    push(m[0], isoFromParts(+m[3], MONTHS[m[1].toLowerCase()], +m[2]), "month-day-year", false);
+    const iso = isoFromParts(+m[3], MONTHS[m[1].toLowerCase()], +m[2]);
+    push(m[0], iso, "month-day-year", false);
+    claimSpan(m, iso);
+  }
+
+  // 2026-04-12 - ISO 8601. The year is written first, so there is no day/month
+  // ambiguity to flag. This is the format an <input type="date"> control and most
+  // document systems emit, so it has to be readable even though it is not how a
+  // person types a date in a sentence.
+  const reIso = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
+  while ((m = reIso.exec(text))) {
+    const iso = isoFromParts(+m[1], +m[2], +m[3]);
+    push(m[0], iso, "iso", false);
+    claimSpan(m, iso);
   }
 
   // 12/04/2026 or 12-04-2026 - ambiguous day/month order in Indian usage.
@@ -133,6 +156,7 @@ export function extractDates(text) {
     else if (b > 12 && a <= 12) iso = isoFromParts(+m[3], a, b);
     else iso = isoFromParts(+m[3], b, a);
     push(m[0], iso, "numeric", a <= 12 && b <= 12);
+    claimSpan(m, iso);
   }
 
   // 12 नवंबर 2025
@@ -140,13 +164,17 @@ export function extractDates(text) {
     "\\b(\\d{1,2})(?:वीं|वां|वा)?\\s+(" + Object.keys(HINDI_MONTHS).join("|") +
     ")\\s+(\\d{4})\\b", "g");
   while ((m = reHi.exec(text))) {
-    push(m[0], isoFromParts(+m[3], HINDI_MONTHS[m[2]], +m[1]), "hindi", false);
+    const iso = isoFromParts(+m[3], HINDI_MONTHS[m[2]], +m[1]);
+    push(m[0], iso, "hindi", false);
+    claimSpan(m, iso);
   }
 
   const reHiMonthFirst = new RegExp(
     "\\b(" + Object.keys(HINDI_MONTHS).join("|") + ")\\s+(\\d{1,2})(?:वीं|वां|वा)?,?\\s+(\\d{4})\\b", "g");
   while ((m = reHiMonthFirst.exec(text))) {
-    push(m[0], isoFromParts(+m[3], HINDI_MONTHS[m[1]], +m[2]), "hindi", false);
+    const iso = isoFromParts(+m[3], HINDI_MONTHS[m[1]], +m[2]);
+    push(m[0], iso, "hindi", false);
+    claimSpan(m, iso);
   }
 
   // Bare year, only when it reads like a reference to an event year.
@@ -154,6 +182,9 @@ export function extractDates(text) {
   while ((m = reYear.exec(text))) {
     const year = +m[1];
     if (year < 1990 || year > 2100) continue;
+    // Skip a year that is part of a fuller date already recorded, so a month-name
+    // date does not also register as an event on 1 January.
+    if (fullDateSpans.some(([s, e]) => m.index >= s && m.index < e)) continue;
     const start = Math.max(0, m.index - 40);
     const end = Math.min(text.length, m.index + m[0].length + 40);
     const context = text.slice(start, end);
@@ -319,4 +350,178 @@ export function buildCaseSummary(title, category, facts, timeline, meta) {
     note:
       "This summary is assembled from your own words. Nothing has been added to your account of events.",
   };
+}
+
+// ---------------------------------------------------------------------------
+// Hidden facts
+// ---------------------------------------------------------------------------
+//
+// A person describing their own trouble leaves out the things a court actually
+// turns on: that they went to a hospital, that the threat was repeated, that
+// somebody saw it. Those are not inferred and presented as fact - each one below
+// is triggered by words the user actually typed, and the words are quoted back
+// so the person can check the reasoning rather than trust it.
+
+const IMPLICATION_RULES = [
+  {
+    id: "medical-attention",
+    label: "Injuries were treated",
+    categories: ["domestic-violence", "dowry", "harassment", "sexual-violence"],
+    pattern: /\b(hospital|doctor|clinic|medical|medicine|prescription|stitch|bruise|bleeding|injur)/i,
+    detail:
+      "You mention medical attention. A medical record is the kind of corroboration that most often carries a case of physical abuse, because it is dated and it is not the person's own account of what happened.",
+  },
+  {
+    id: "repeat-conduct",
+    label: "This is a repeated course of conduct",
+    categories: null,
+    pattern: /\b(again|keeps?|kept|every|repeated|often|always|continues?|still)\b/i,
+    detail:
+      "You describe something that kept happening. Most of these provisions turn on a course of conduct rather than a single incident, so the repetition is itself the relevant fact.",
+  },
+  {
+    id: "witnesses-present",
+    label: "Somebody may have witnessed it",
+    categories: null,
+    pattern: /\b(witness|witnesses|neighbou?r|present|was there|saw|heard)\b/i,
+    detail:
+      "You mention another person being present or aware. A witness who can speak to what was said or done is often more useful than a document.",
+  },
+  {
+    id: "messages-record",
+    label: "There is a written record of the threats",
+    categories: null,
+    pattern: /\b(screenshot|message|sms|whatsapp|call log|chat|recorded?|recording|video|photo)\b/i,
+    detail:
+      "The threats exist in writing or on a recording. Keep the original device and the original messages, with their dates; a screenshot without the conversation around it proves very little.",
+  },
+  {
+    id: "family-member-offender",
+    label: "A wider family member may be involved",
+    categories: ["domestic-violence", "dowry"],
+    pattern: /\b(in-law|in law|sister-in-law|mother-in-law|father-in-law|bahu|saas|jiji|nanad|devar|family)\b/i,
+    detail:
+      "You mention a relative of your husband. Several offences in this area can be committed by a relative of the husband, not only by the husband himself, so who did it changes which section applies.",
+  },
+  {
+    id: "money-demand",
+    label: "There is a money demand behind this",
+    categories: ["dowry", "domestic-violence"],
+    pattern: /\b(dowry|dahej|dhan|maang|mand|mang|demand|paise|paisa|rupees|lakh|money|cash)\b/i,
+    detail:
+      "A money demand appears in what you describe. Where a demand for money is tied to ill-treatment, it changes the section that applies and can carry a separate compensation.",
+  },
+  {
+    id: "transferred-money-online",
+    label: "Money moved out of your account",
+    categories: ["cyber", "financial"],
+    pattern: /\b(otp|password|net ?banking|upi|account|wallet|transferred|debited|credited|bank)\b/i,
+    detail:
+      "There is a financial transaction. Keep the bank statement and the transaction reference: a transfer record establishes the loss far more directly than an account of it.",
+  },
+  {
+    id: "employer-involved",
+    label: "The workplace is involved",
+    categories: ["workplace-harassment"],
+    pattern: /\b(office|workplace|employer|company|manager|boss|colleague)\b/i,
+    detail:
+      "The conduct happened at or through work. That route to the Internal Complaints Committee depends on the employment relationship, so who your employer is matters.",
+  },
+  {
+    id: "child-present",
+    label: "A child is caught in it",
+    categories: null,
+    pattern: /\b(child|children|daughter|son|bacha|bachchi|bete|minor|school)\b/i,
+    detail:
+      "A child appears in what you describe. Custody, child maintenance and protection are decided separately, and they are decided in the child's own interest.",
+  },
+  {
+    id: "safety-first",
+    label: "Safety may be the immediate question",
+    categories: ["domestic-violence", "dowry", "harassment", "sexual-violence", "liberty"],
+    pattern: /\b(safer|scared|afraid|fear|danger|risk|chase|follow|threaten|kill|dhamki|dhaamki)\b/i,
+    detail:
+      "You describe fear or risk. Safety comes before anything else on this list, and an emergency step that does not depend on winning a case always comes first.",
+  },
+];
+
+/** Absences that change the answer, rather than merely making it shorter. */
+const MATERIAL_ABSENCES = [
+  {
+    id: "no-date",
+    label: "No date for what happened",
+    matters:
+      "The date decides which criminal statute applies. The Bharatiya Nyaya Sanhita and the Bharatiya Nagarik Suraksha Sanhita replaced the Indian Penal Code and the Code of Criminal Procedure on 1 July 2024, and conduct before that date is ordinarily dealt with under the old law.",
+    when: (text, dates) => dates.length === 0 && !/(19|20)\d{2}/.test(text),
+  },
+  {
+    id: "no-witness-or-record",
+    label: "Nothing that records what happened",
+    matters:
+      "Nothing in the account points to a witness or a document. That does not mean the case fails, but it changes what you should gather before you go.",
+    when: (text) =>
+      !/\b(witness|neighbou?r|present|saw|seen|photo|screenshot|message|sms|chat|hospital|doctor|medical|record|call log|video)\b/i.test(text),
+  },
+  {
+    id: "no-timeline",
+    label: "Only one event described",
+    matters:
+      "Most of these provisions turn on a course of conduct over time. A single dated incident tells a court much less than a sequence.",
+    when: (text) => (text.match(/[.!?\u0964]/g) || []).length < 2,
+  },
+];
+
+function quote(text, match) {
+  if (!match || typeof match.index !== "number") return null;
+  const start = Math.max(0, match.index - 45);
+  const end = Math.min(text.length, match.index + match[0].length + 45);
+  const slice = text.slice(start, end).replace(/\s+/g, " ").trim();
+  return (start > 0 ? "..." : "") + slice + (end < text.length ? "..." : "");
+}
+
+/**
+ * Facts the law turns on that the narrative implies, plus the absences that
+ * change the answer. Everything is tied to a literal span of the user's own
+ * words; nothing is asserted that they did not write.
+ */
+export function extractHiddenFacts(text, { categories = [], dates = [] } = {}) {
+  const out = [];
+  if (!text) return out;
+  const ids = new Set(
+    categories.map((c) => (typeof c === "string" ? c : c && c.id)).filter(Boolean),
+  );
+
+  for (const rule of IMPLICATION_RULES) {
+    if (rule.categories && !rule.categories.some((c) => ids.has(c))) continue;
+    const m = text.match(rule.pattern);
+    if (!m) continue;
+    out.push({
+      kind: "implied",
+      id: rule.id,
+      label: rule.label,
+      detail: rule.detail,
+      evidence: quote(text, m),
+      basis: `Your account contains "${m[0].trim()}".`,
+    });
+  }
+
+  for (const gap of MATERIAL_ABSENCES) {
+    let applies = false;
+    try {
+      applies = Boolean(gap.when(text, dates));
+    } catch {
+      applies = false;
+    }
+    if (!applies) continue;
+    out.push({
+      kind: "absent",
+      id: gap.id,
+      label: gap.label,
+      detail: gap.matters,
+      evidence: null,
+      basis: "Not found anywhere in the narrative you entered.",
+    });
+  }
+
+  return out;
 }

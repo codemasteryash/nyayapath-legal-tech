@@ -404,6 +404,41 @@ export async function analyse(rawInput) {
     }));
   }
 
+  // --- Cross-statute graph -------------------------------------------------
+  // The abstract asks for an indexed graph across penal, civil and special law.
+  // We ask the engine for the subgraph around the sections actually matched, so
+  // the user sees what connects to what in this case rather than the whole graph.
+  let graph = { nodes: [], edges: [], stats: { nodes: 0, edges: 0, statuteCount: 0, statutes: [], crossStatuteEdges: 0 }, note: "The graph engine did not respond, so cross-statute links are not shown." };
+  const graphIds = provisions.map((p) => p.id).slice(0, 12);
+  if (graphIds.length) {
+    const gRes = await retrieval.graph({ provisionIds: graphIds });
+    if (gRes.ok && Array.isArray(gRes.nodes)) {
+      const matched = new Set(graphIds);
+      graph = {
+        ...gRes,
+        nodes: (gRes.nodes || []).map((n) => ({ ...n, matched: matched.has(n.id) })),
+        stats: gRes.stats || {},
+        note:
+          "Every link below is derived from the knowledge base and shows the reason it exists. " +
+          "Sections that matched your account are marked.",
+      };
+    }
+  }
+
+  // --- Forms ---------------------------------------------------------------
+  // A pro se person needs to know what paper to file, not just which section
+  // applies, so the actual applications are surfaced alongside the plan.
+  const forms = kb.forms_for_category(primaryId);
+  const crossForms = resolved
+    .slice(1)
+    .flatMap((r) => kb.forms_for_category(r.id).map((f) => ({ ...f, forIssue: r.record.label })));
+
+  // --- Hidden facts --------------------------------------------------------
+  const hiddenFacts = extract.extractHiddenFacts(text, {
+    categories: resolved.map((r) => r.id),
+    dates: dates.map((d) => d.iso),
+  });
+
   // --- Action plan ---------------------------------------------------------
   const primaryTemplate = kb.action_template(primaryId) || [];
   const actionPlan = primaryTemplate.map((step) => {
@@ -483,7 +518,7 @@ export async function analyse(rawInput) {
     reliability: buildReliability({
       facts, timeline, provisions, judgments, evidence, retrievalNote, language,
     }),
-    engine: "sparse TF-IDF retrieval over a curated corpus (no language model in the core path)",
+    engine: "hybrid retrieval - sparse TF-IDF for exact statutory wording, plus a 384-dimension multilingual embedding model for meaning, over a curated corpus",
   };
 
   let ai = { ok: false, mode: "deterministic", reason: "not_attempted" };
@@ -553,12 +588,16 @@ export async function analyse(rawInput) {
       defaultProvisionIds: r.record.defaultProvisionIds,
     })),
     facts: facts.facts,
+    hiddenFacts,
     stats: { sentences: facts.sentenceCount, words: facts.wordCount },
     timeline,
     datesFound: dates,
     evidence,
     provisions,
     judgments,
+    graph,
+    forms,
+    crossForms,
     actionPlan,
     crossStatute,
     followUps,
