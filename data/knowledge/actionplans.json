@@ -5,6 +5,44 @@
     "lastReviewed": "2026-10-18"
   },
   "templates": {
+    "theft": [
+      {
+        "order": 1,
+        "title": "Keep proof that the property was yours and that it was taken",
+        "why": "A complaint and any later recovery depend on connecting the property to you and showing when it went missing.",
+        "steps": "Keep the invoice, receipt, warranty card or serial number. Photograph the device and any identifying marks. Save messages or call records that show who took it or admitted taking it.",
+        "evidenceNeeded": "Proof of ownership, identifying details, photographs, and any messages about the taking.",
+        "authorityRefs": [],
+        "deadline": null
+      },
+      {
+        "order": 2,
+        "title": "Report the taking at a police station in writing",
+        "why": "Section 173 of the criminal procedure requires information about a cognizable offence to be recorded and a copy given free of cost to the informant. The corpus includes section 315 on dishonest misappropriation or conversion of movable property; it is related material, not a finding that theft is established.",
+        "steps": "Give the police a written account: what was taken, when, where, who was seen, and why it was yours. Ask for the information to be recorded and for a copy.",
+        "evidenceNeeded": "Your written account, proof of ownership, and any messages or witness details.",
+        "authorityRefs": ["BNS-315", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 3,
+        "title": "If the person entered your home without permission, report that entry too",
+        "why": "Criminal trespass and house-trespass are separate offences from the taking. The facts of the entry should be stated precisely.",
+        "steps": "Say when and how the person entered, whether any door or lock was opened or broken, and whether anything else was disturbed.",
+        "evidenceNeeded": "Your written account, photographs of the entry point, and any witness details.",
+        "authorityRefs": ["BNS-329", "BNSS-173"],
+        "deadline": null
+      },
+      {
+        "order": 4,
+        "title": "Ask the District Legal Services Authority about free representation",
+        "why": "A legal aid lawyer can check whether the complaint has been recorded correctly and what remedy is available for recovering the property.",
+        "steps": "Contact the Legal Services Cell at the district court complex or NALSA. Take the written complaint, its copy, and your proof of ownership.",
+        "evidenceNeeded": "The police complaint and copy, plus proof of ownership.",
+        "authorityRefs": ["nalsa", "dlsa"],
+        "deadline": null
+      }
+    ],
     "domestic-violence": [
       {
         "order": 1,

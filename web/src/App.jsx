@@ -9,6 +9,7 @@ import AdvocateChat from "./views/AdvocateChat.jsx";
 import OpponentArena from "./views/OpponentArena.jsx";
 import WorkspacesDirectory from "./views/WorkspacesDirectory.jsx";
 import NewWorkspaceInterview from "./views/NewWorkspaceInterview.jsx";
+import FindLawyer from "./views/FindLawyer.jsx";
 import {
   ActionPlan,
   AiBadge,
@@ -132,10 +133,10 @@ function TopBar({ route, go, health, hasCase, onReset }) {
             <span className={`dot${state === "on" && !densePending ? "" : state === "off" ? " dot--off" : " dot--wait"}`} />
             {label}
           </span>
-
           <NavLink label="Home" route={route} current={route} go={go} target="home" />
           <NavLink label="AI Advocate" route={route} current={route} go={go} target="advocate" />
           <NavLink label="Opponent" route={route} current={route} go={go} target="opponent" />
+          <NavLink label="Find Lawyer" route={route} current={route} go={go} target="lawyers" />
           <NavLink label="Statutes" route={route} current={route} go={go} target="sources" />
           {hasCase
             ? <NavLink label="Dossier" route={route} current={route} go={go} target="case" />
@@ -714,7 +715,10 @@ function Workspace({ data, form, meta, samples, go, onReset, onDelete, onToast }
    ------------------------------------------------------------------------- */
 
 export default function App() {
-  const [route, go] = useHashRoute();
+  const [routeWithQuery, go] = useHashRoute();
+  // Query strings stay in the hash so a link can prefill directory filters
+  // without adding a routing dependency.
+  const route = routeWithQuery.split("?")[0];
 
   const [meta, setMeta] = useState(null);
   const [health, setHealth] = useState(null);
@@ -1109,6 +1113,8 @@ export default function App() {
           </main>
         )
       ) : null}
+
+      {route === "lawyers" ? <FindLawyer meta={meta} /> : null}
 
       {route === "sources" ? (
         <Sources meta={meta} health={health} onBack={() => go("home")} />

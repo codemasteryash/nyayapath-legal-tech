@@ -2204,4 +2204,4 @@ export {
   AiBlock,
   AiBadge,
   OpponentSimulationView,
-};
+};

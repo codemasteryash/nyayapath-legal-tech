@@ -25,6 +25,7 @@ import * as retrieval from "./retrievalClient.js";
 import * as analysis from "./analysis.js";
 import * as pdf from "./pdf.js";
 import * as llm from "./llm.js";
+import * as lawyers from "./lawyers.js";
 import { extractDates, extractFacts, buildTimeline, detectLanguage, splitSentences } from "./extract.js";
 import {
   usersRepo,
@@ -173,6 +174,35 @@ app.get("/api/samples/:id", (req, res) => {
   const sample = kb.sample_case(req.params.id);
   if (!sample) return res.status(404).json({ error: "sample_not_found" });
   res.json({ sample });
+});
+
+/* ---------------------------------------------------------------------------
+   Lawyer directory
+   Deterministic filtering only. The complete case narrative is never sent
+   here: matching uses the category, city and filter values the user chose.
+   --------------------------------------------------------------------------- */
+
+app.get("/api/lawyers", (req, res) => {
+  const result = lawyers.listLawyers(req.query || {});
+  if (!result.ok) {
+    return res.status(result.status || 400).json({
+      error: result.error,
+      detail: "One or more lawyer filters were not understood.",
+      errors: result.errors,
+    });
+  }
+  res.json(result);
+});
+
+app.get("/api/lawyers/:id", (req, res) => {
+  const lawyer = lawyers.findLawyer(String(req.params.id || ""));
+  if (!lawyer) {
+    return res.status(404).json({
+      error: "lawyer_not_found",
+      detail: "No lawyer profile matches that id.",
+    });
+  }
+  res.json({ lawyer, demoOnly: lawyer.isDemo });
 });
 
 // ---------------------------------------------------------------------------

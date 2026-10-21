@@ -250,4 +250,13 @@ export const api = {
       method: "POST",
       timeoutMs: 25000,
     }),
-};
+
+  lawyers: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== "" && v !== null),
+    ).toString();
+    return request(`/lawyers${qs ? `?${qs}` : ""}`);
+  },
+
+  lawyer: (id) => request(`/lawyers/${encodeURIComponent(id)}`),
+};

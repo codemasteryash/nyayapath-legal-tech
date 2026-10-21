@@ -299,6 +299,9 @@ async function submit(e) {
                             {selected.blurb} <b>Forum:</b> {selected.forum}
                           </p>
                         ) : null}
+                        <p className="field__hint">
+                          Not sure which category fits? Describe what happened in your own words.
+                        </p>
                       </div>
 
                       <div className={errors.location ? "field field--error" : "field"}>

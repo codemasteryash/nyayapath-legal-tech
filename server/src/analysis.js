@@ -13,9 +13,34 @@
 import * as kb from "./knowledge.js";
 import * as retrieval from "./retrievalClient.js";
 import * as extract from "./extract.js";
+import * as issueDetection from "./issueDetection.js";
 import * as llm from "./llm.js";
 
 const NEW_CRIMINAL_LAW_FROM = "2024-07-01";
+const MIN_SECONDARY_CATEGORY_SCORE = 3;
+
+const GENERIC_TOPIC_TERMS = new Set([
+  "act",
+  "case",
+  "court",
+  "domestic",
+  "family",
+  "friend",
+  "home",
+  "house",
+  "household",
+  "law",
+  "legal",
+  "matter",
+  "money",
+  "order",
+  "person",
+  "police",
+  "property",
+  "section",
+  "state",
+  "woman",
+]);
 
 const CATEGORY_ALIASES = {
   harassment: "harassment",
@@ -102,11 +127,12 @@ export function validateIntake(input = {}) {
  * sections applies depends on when the conduct happened, so we state this rather
  * than silently showing the current sections.
  */
-function applicability(categoryId, startDate, detectedDates) {
+function applicability(categoryId, startDate, detectedDates, extra = {}) {
   const all = [startDate, ...detectedDates].filter(Boolean).sort();
   const earliest = all[0] || null;
+  const categoryIds = [...new Set([categoryId, ...(extra.categoryIds || [])].filter(Boolean))];
 
-  const criminalFamilies = {
+  const families = {
     harassment: ["BNS", "BNSS", "POSH"],
     "sexual-violence": ["BNS", "BNSS", "POCSO"],
     "domestic-violence": ["DVA", "BNS", "BNSS"],
@@ -115,13 +141,17 @@ function applicability(categoryId, startDate, detectedDates) {
     "workplace-harassment": ["POSH", "BNS", "BNSS"],
     "child-safety": ["POCSO", "BNSS"],
     property: ["BNS"],
+    assault: ["BNS", "BNSS"],
     liberty: ["BNS", "BNSS"],
     financial: ["NI", "BNS", "CPA"],
     consumer: ["CPA"],
     "civil-other": ["CPA"],
-  }[categoryId] || [];
+  };
+  const criminalFamilies = categoryIds.flatMap((id) => families[id] || []);
 
-  const criminalInvolved = criminalFamilies.some((a) => a === "BNS" || a === "BNSS");
+  const criminalInvolved =
+    Boolean(extra.criminalHint) ||
+    criminalFamilies.some((a) => a === "BNS" || a === "BNSS");
   const before = earliest ? earliest < NEW_CRIMINAL_LAW_FROM : null;
 
   if (!criminalInvolved) {
@@ -137,6 +167,8 @@ function applicability(categoryId, startDate, detectedDates) {
       appliesFrom: NEW_CRIMINAL_LAW_FROM,
       earliestEvent: earliest,
       criminalLawTransition: true,
+      corpusCoverageGap:
+        "The bundled corpus contains the current Bharatiya Nyaya Sanhita and Bharatiya Nagarik Suraksha Sanhita sections, but not the repealed Indian Penal Code or Code of Criminal Procedure text. The provisions shown are therefore the current sections, not the law that applied at the time.",
       note: `The earliest event you gave is ${earliest}, which is before 1 July 2024. The Bharatiya Nyaya Sanhita 2023, the Bharatiya Nagarik Suraksha Sanhita 2023 and the Bharatiya Sakshya Adhiniyam 2023 came into force on that date and repealed the Indian Penal Code, the Code of Criminal Procedure and the Indian Evidence Act. We are showing the current sections because they are the ones in force now, but conduct dating from before that date is ordinarily dealt with under the repealed law. A lawyer should confirm which applies.`,
     };
   }
@@ -247,6 +279,195 @@ function referralsFor(categories, emergencyFlag) {
 }
 
 // ---------------------------------------------------------------------------
+// Retrieval merging and coverage
+// ---------------------------------------------------------------------------
+
+function categoriesOf(rec) {
+  if (Array.isArray(rec?.categories) && rec.categories.length) return rec.categories;
+  return rec?.category ? [rec.category] : [];
+}
+
+function normaliseTopicText(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function topicTermsFor(rec, kind) {
+  const fields =
+    kind === "judgment"
+      ? [rec?.signalTerms]
+      : [rec?.keywords, rec?.signalTerms];
+  return fields
+    .flatMap((field) => (Array.isArray(field) ? field : [field]))
+    .map(normaliseTopicText)
+    .filter((term) => term.length >= 3 && !GENERIC_TOPIC_TERMS.has(term));
+}
+
+function isTopicallyRelevant(rec, context, kind = "provision") {
+  const haystack = normaliseTopicText(context);
+  if (!haystack) return false;
+  return topicTermsFor(rec, kind).some((term) => haystack.includes(term));
+}
+
+function robberyTitleCaveat(title, detectedIssues) {
+  const titleMentionsRobbery = /\b(?:robbery|robbed|robbing)\b/i.test(String(title || ""));
+  if (!titleMentionsRobbery) return null;
+  if ((detectedIssues || []).some((issue) => issue.id === "robbery")) return null;
+  return "The title mentions robbery, but the narrative does not provide enough facts for a robbery candidate, which requires force or a threat used to take property. Robbery is not assumed from the title; the taking is treated here as theft unless the narrative says otherwise.";
+}
+
+const ACTION_PLAN_ISSUE_ALIASES = {
+  robbery: "theft",
+};
+
+function actionPlanKeyFor(detectedIssues, researchCategories, primaryId) {
+  const hasTemplate = (id) => Boolean(id) && (kb.action_template(id) || []).length > 0;
+  for (const issue of detectedIssues || []) {
+    for (const id of [issue.id, ACTION_PLAN_ISSUE_ALIASES[issue.id]]) {
+      if (hasTemplate(id)) return { key: id, kind: "issue" };
+    }
+  }
+  const category = (researchCategories || []).find((rec) => hasTemplate(rec.id));
+  if (category) return { key: category.id, kind: "category" };
+  return { key: primaryId, kind: "category" };
+}
+
+function researchCategoryRecords(resolved, primaryId, detectedIssues) {
+  const classified = new Map(resolved.map((rec) => [rec.id, rec]));
+  const ids = detectedIssues.length
+    ? detectedIssues.flatMap((issue) => issue.categoryIds || [])
+    : [primaryId];
+  return [...new Set(ids)]
+    .map((id) => {
+      if (classified.has(id)) return classified.get(id);
+      const record = kb.category_by_id(id);
+      if (!record) return null;
+      return {
+        id,
+        label: record.label,
+        score: null,
+        matchedSignals: [],
+        reason: "Matched from the narrative",
+        record,
+      };
+    })
+    .filter(Boolean);
+}
+
+function mergeRetrieved(groups) {
+  const merged = new Map();
+  for (const { results, source } of groups) {
+    for (const rec of results || []) {
+      if (!rec?.id) continue;
+      const existing = merged.get(rec.id);
+      if (!existing) {
+        merged.set(rec.id, {
+          ...rec,
+          matchedTerms: [...new Set(rec.matchedTerms || [])],
+          retrievalSources: source ? [source] : [],
+        });
+        continue;
+      }
+      if (typeof rec.score === "number" && rec.score > (existing.score ?? 0)) {
+        existing.score = rec.score;
+      }
+      if (source && !existing.retrievalSources.includes(source)) {
+        existing.retrievalSources.push(source);
+      }
+      existing.matchedTerms = [
+        ...new Set([...(existing.matchedTerms || []), ...(rec.matchedTerms || [])]),
+      ].slice(0, 12);
+    }
+  }
+  return [...merged.values()].sort(
+    (a, b) => (b.score ?? 0) - (a.score ?? 0) || a.id.localeCompare(b.id),
+  );
+}
+
+function relevanceBand(score) {
+  return score >= 0.12 ? "strong" : score >= 0.05 ? "moderate" : "weak";
+}
+
+function retrievalEngineLabel(mode) {
+  if (mode === "hybrid") {
+    return "hybrid retrieval - sparse TF-IDF for exact statutory wording, plus a multilingual sentence-embedding model for meaning, over a curated corpus";
+  }
+  if (mode === "dense") {
+    return "dense retrieval - a multilingual sentence-embedding model over a curated corpus";
+  }
+  if (mode === "unavailable") {
+    return "retrieval engine unavailable for this request; no provision matching was performed";
+  }
+  return "sparse TF-IDF retrieval over a curated corpus; the dense sentence-embedding model was not available for this request";
+}
+
+function buildRetrievalCoverage({
+  provisions,
+  judgments,
+  detectedIssues,
+  retrievalNote,
+  judgmentNote,
+  applicabilityInfo,
+  selectedMismatch,
+  contextWarning,
+}) {
+  const strong = provisions.filter((p) => p.relevance === "strong").length;
+  const core = provisions.filter((p) => p.relevance === "core-for-this-issue").length;
+  const moderate = provisions.filter((p) => p.relevance === "moderate").length;
+  const relevant = strong + core + moderate;
+  const gaps = detectedIssues.filter((i) => i.corpusSupport?.status !== "direct");
+
+  let status = "good";
+  if (retrievalNote) status = "unavailable";
+  else if (!provisions.length || relevant === 0) status = "insufficient";
+  else if (!detectedIssues.length && strong === 0) status = "insufficient";
+  else if (gaps.length || !judgments.length || strong === 0) status = "partial";
+
+  const warnings = [];
+  if (retrievalNote) warnings.push(retrievalNote);
+  if (judgmentNote) warnings.push(judgmentNote);
+  for (const issue of gaps) {
+    if (issue.corpusSupport?.note) warnings.push(issue.corpusSupport.note);
+  }
+  if (!provisions.length && !retrievalNote) {
+    warnings.push(
+      "No provision in the bundled corpus could be matched to this account. Nothing has been invented to fill the gap.",
+    );
+  } else if (relevant === 0 && !retrievalNote) {
+    warnings.push(
+      "Only weak lexical matches were found. Treat them as unconfirmed and add more specific facts before relying on them.",
+    );
+  }
+  if (!detectedIssues.length && strong === 0 && !retrievalNote) {
+    warnings.push(
+      "No candidate legal issue could be identified from the narrative, and only weak or category-default provisions were found. Add what was done, by whom, and when before relying on this material.",
+    );
+  }
+  if (!judgments.length && !judgmentNote) {
+    warnings.push("No decision in the bundled corpus matched this account, so no precedent is shown.");
+  }
+  if (applicabilityInfo?.corpusCoverageGap) warnings.push(applicabilityInfo.corpusCoverageGap);
+  if (selectedMismatch) warnings.push(selectedMismatch);
+  if (contextWarning) warnings.push(contextWarning);
+
+  return {
+    status,
+    hasRelevantMaterial: relevant > 0,
+    provisionCount: provisions.length,
+    strongProvisionCount: strong,
+    moderateProvisionCount: moderate,
+    coreProvisionCount: core,
+    judgmentCount: judgments.length,
+    directIssueCount: detectedIssues.filter((i) => i.corpusSupport?.status === "direct").length,
+    relatedOnlyIssueCount: detectedIssues.filter((i) => i.corpusSupport?.status === "related-only").length,
+    unsupportedIssueCount: detectedIssues.filter((i) => i.corpusSupport?.status === "none").length,
+    warning: warnings.join(" ") || null,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Main entry
 // ---------------------------------------------------------------------------
 
@@ -265,6 +486,14 @@ export async function analyse(rawInput) {
   const timeline = extract.buildTimeline(text);
   const dates = extract.extractDates(text);
 
+  // Issue detection is deliberately separate from the fixed playbook. It reads
+  // the narrative for conduct cues and expands them into corpus search terms, so
+  // a broad or mismatched category cannot hide relevant material.
+  const detectedIssues = issueDetection.detectIssues(text);
+  const issueCategoryIds = issueDetection.categoryIdsFor(detectedIssues);
+  const issueRetrievalTerms = issueDetection.retrievalTerms(detectedIssues);
+  const titleCaveat = robberyTitleCaveat(input.title, detectedIssues);
+
   // --- Classification -------------------------------------------------------
   let detected = [];
   if (retrieval.health) {
@@ -276,8 +505,11 @@ export async function analyse(rawInput) {
 
   const primaryId = input.category;
   const primary = kb.category_by_id(primaryId);
+  const materialDetected = detected.filter(
+    (d) => d.id === primaryId || Number(d.score) >= MIN_SECONDARY_CATEGORY_SCORE,
+  );
   const resolved = [];
-  for (const d of detected) {
+  for (const d of materialDetected) {
     const rec = kb.category_by_id(d.id);
     if (rec) resolved.push({ ...d, record: rec });
   }
@@ -294,41 +526,111 @@ export async function analyse(rawInput) {
     });
   }
 
+  // --- Legal research focus ------------------------------------------------
+  const researchCategories = researchCategoryRecords(resolved, primaryId, detectedIssues);
+  const issueIds = resolved.map((r) => r.id);
+  const supportedCategoryIds = [...new Set([...issueIds, ...issueCategoryIds])];
+  const retrievalCategoryIds = detectedIssues.length ? issueCategoryIds : [primaryId];
+
   // --- Facts ---------------------------------------------------------------
-  const categoryKeywords = resolved.flatMap((r) => r.record?.keywords || []);
+  const categoryKeywords = researchCategories.flatMap((r) => r.record?.keywords || []);
   const facts = extract.extractFacts(text, categoryKeywords);
 
   // --- Evidence ------------------------------------------------------------
-  const evidence = mapEvidence(resolved);
+  const evidence = mapEvidence(researchCategories);
   const likelyHeld = evidenceHintsFromNarrative(text, evidence);
   for (const item of evidence) {
     item.suggestedHeld = likelyHeld.has(item.item);
   }
 
-  // --- Legal research ------------------------------------------------------
-  const issueIds = resolved.map((r) => r.id);
-  const defaultProvisionIds = new Set(
-    resolved.flatMap((r) => r.record?.defaultProvisionIds || []),
+  // --- Legal research (continued) -----------------------------------------
+  const coreCategoryIds = new Set(
+    issueIds.filter((id) => retrievalCategoryIds.includes(id)),
   );
+  const defaultProvisionIds = new Set(
+    resolved
+      .filter((r) => coreCategoryIds.has(r.id))
+      .flatMap((r) => r.record?.defaultProvisionIds || []),
+  );
+  const issueBoostIds = [
+    ...new Set(detectedIssues.flatMap((i) => i.corpusSupport?.provisionIds || [])),
+  ];
 
-  const applicabilityInfo = applicability(primaryId, input.startDate, dates.map((d) => d.iso));
+  const applicabilityInfo = applicability(primaryId, input.startDate, dates.map((d) => d.iso), {
+    categoryIds: issueCategoryIds,
+    criminalHint: detectedIssues.some((i) => i.criminal),
+  });
+  const beforeNewCriminalLaw =
+    Boolean(applicabilityInfo.earliestEvent) &&
+    applicabilityInfo.earliestEvent < NEW_CRIMINAL_LAW_FROM;
 
-  const provQuery = [text, resolved.map((r) => r.record?.label).join(" ")].join(" ");
+  const narrativeQuery = issueRetrievalTerms.length
+    ? `${text} ${issueRetrievalTerms.join(" ")}`
+    : text;
+  const categoryQuery = [
+    text,
+    resolved.map((r) => r.record?.label).join(" "),
+    detectedIssues.map((i) => i.label).join(" "),
+  ].join(" ");
+  const provisionTopicContext = [
+    input.title,
+    text,
+    ...detectedIssues.flatMap((issue) => [
+      issue.label,
+      ...(issue.searchTerms || []),
+      ...(issue.matchedTerms || []),
+    ]),
+  ].join(" ");
+  const judgmentTopicContext = [
+    input.title,
+    text,
+    ...detectedIssues.map((issue) => issue.label),
+  ].join(" ");
+
+  const [provRes, categoryProvRes] = await Promise.all([
+    retrieval.retrieve({
+      collection: "provisions",
+      query: narrativeQuery,
+      topK: 12,
+      boostIds: issueBoostIds,
+      minScore: 0.03,
+    }),
+    retrieval.retrieve({
+      collection: "provisions",
+      query: categoryQuery,
+      topK: 10,
+      boostIds: [...defaultProvisionIds],
+      filterCategories: retrievalCategoryIds,
+      minScore: 0.02,
+    }),
+  ]);
+
   let provisions = [];
   let retrievalNote = null;
-  const provRes = await retrieval.retrieve({
-    collection: "provisions",
-    query: provQuery,
-    topK: 10,
-    boostIds: [...defaultProvisionIds],
-    filterCategories: issueIds,
-  });
-  if (provRes.ok && Array.isArray(provRes.results)) {
-    provisions = provRes.results;
-    // Act metadata for each hit, straight from the corpus.
+  const retrievalMode =
+    provRes.ok || categoryProvRes.ok
+      ? provRes.mode || categoryProvRes.mode || "sparse"
+      : "unavailable";
+  if (provRes.ok || categoryProvRes.ok) {
+    const narrativeProvisions = (provRes.ok ? provRes.results || [] : []).filter((rec) => {
+      if (detectedIssues.length) {
+        const cats = categoriesOf(rec);
+        if (cats.length && !cats.some((c) => retrievalCategoryIds.includes(c))) return false;
+      }
+      return isTopicallyRelevant(rec, provisionTopicContext);
+    });
+    const categoryProvisions = (categoryProvRes.ok ? categoryProvRes.results || [] : []).filter(
+      (rec) => isTopicallyRelevant(rec, provisionTopicContext),
+    );
+    provisions = mergeRetrieved([
+      { results: narrativeProvisions, source: "narrative" },
+      { results: categoryProvisions, source: "selected-or-detected-category" },
+    ]);
+
     const acts = kb.acts();
     provisions = provisions.map((p) => {
       const act = acts[p.act] || {};
+      const cats = categoriesOf(p);
       return {
         ...p,
         actShortTitle: act.shortTitle,
@@ -338,12 +640,17 @@ export async function analyse(rawInput) {
         inForceFrom: act.inForceFrom,
         sourceUrl: act.sourceUrl,
         sourceLabel: act.sourceLabel,
-        fromIssueCategory:
-          p.category && issueIds.includes(p.category)
-            ? kb.category_by_id(p.category)?.label || null
-            : null,
-        relevance:
-          p.score >= 0.12 ? "strong" : p.score >= 0.05 ? "moderate" : "weak",
+        fromIssueCategory: (() => {
+          const cid = cats.find(
+            (c) => supportedCategoryIds.includes(c) && kb.category_by_id(c),
+          );
+          return cid ? kb.category_by_id(cid)?.label || null : null;
+        })(),
+        relevance: relevanceBand(p.score),
+        applicabilityWarning:
+          beforeNewCriminalLaw && ["BNS", "BNSS"].includes(p.act)
+            ? `This is a current section. The earliest date in the account is before 1 July 2024, so the repealed law may govern the conduct. The corpus does not contain that repealed text.`
+            : undefined,
       };
     });
   } else {
@@ -351,13 +658,17 @@ export async function analyse(rawInput) {
       "The retrieval engine did not respond, so no provisions could be matched automatically. The action plan below is still available because it is read directly from the corpus.";
   }
 
-  // Prepend provisions the playbook treats as core for the selected issue, so a
-  // weak textual match never hides an obviously applicable section.
+  // Prepend provisions the playbook treats as core for an issue that the
+  // narrative supports. A mismatched selected category does not get to force its
+  // own core sections into an unrelated case.
   const core = [];
   for (const pid of defaultProvisionIds) {
     if (provisions.some((p) => p.id === pid)) continue;
     const rec = kb.provision_by_id(pid);
-    if (rec) core.push(rec);
+    if (!rec) continue;
+    if (!categoriesOf(rec).some((c) => retrievalCategoryIds.includes(c))) continue;
+    if (!isTopicallyRelevant(rec, provisionTopicContext)) continue;
+    core.push(rec);
   }
   if (core.length) {
     const acts = kb.acts();
@@ -368,6 +679,7 @@ export async function analyse(rawInput) {
           ...rec,
           score: null,
           matchedTerms: [],
+          retrievalSources: ["core-for-supported-issue"],
           actShortTitle: act.shortTitle,
           actNumber: act.actNo,
           actKind: act.kind,
@@ -376,7 +688,7 @@ export async function analyse(rawInput) {
           sourceUrl: act.sourceUrl,
           sourceLabel: act.sourceLabel,
           fromIssueCategory:
-            rec.category && issueIds.includes(rec.category)
+            rec.category && supportedCategoryIds.includes(rec.category)
               ? kb.category_by_id(rec.category)?.label || null
               : null,
           relevance: "core-for-this-issue",
@@ -387,21 +699,46 @@ export async function analyse(rawInput) {
   }
 
   // --- Precedents ----------------------------------------------------------
-  const judgQuery = [text, resolved.map((r) => r.record?.label).join(" ")].join(" ");
+  const [judgRes, categoryJudgRes] = await Promise.all([
+    retrieval.retrieve({
+      collection: "judgments",
+      query: narrativeQuery,
+      topK: 6,
+      minScore: 0.03,
+    }),
+    retrieval.retrieve({
+      collection: "judgments",
+      query: categoryQuery,
+      topK: 5,
+      filterCategories: retrievalCategoryIds,
+      minScore: 0.03,
+    }),
+  ]);
+
   let judgments = [];
-  const judgRes = await retrieval.retrieve({
-    collection: "judgments",
-    query: judgQuery,
-    topK: 5,
-    filterCategory: primaryId,
-    minScore: 0.03,
-  });
-  if (judgRes.ok && Array.isArray(judgRes.results)) {
-    judgments = judgRes.results.map((j) => ({
+  let judgmentNote = null;
+  if (judgRes.ok || categoryJudgRes.ok) {
+    const narrativeJudgments = (judgRes.ok ? judgRes.results || [] : []).filter((rec) => {
+      if (detectedIssues.length) {
+        const cats = categoriesOf(rec);
+        if (cats.length && !cats.some((c) => retrievalCategoryIds.includes(c))) return false;
+      }
+      return isTopicallyRelevant(rec, judgmentTopicContext, "judgment");
+    });
+    const categoryJudgments = (categoryJudgRes.ok ? categoryJudgRes.results || [] : []).filter(
+      (rec) => isTopicallyRelevant(rec, judgmentTopicContext, "judgment"),
+    );
+    judgments = mergeRetrieved([
+      { results: narrativeJudgments, source: "narrative" },
+      { results: categoryJudgments, source: "selected-or-detected-category" },
+    ]).map((j) => ({
       ...j,
-      relevance: j.score >= 0.12 ? "strong" : j.score >= 0.05 ? "moderate" : "weak",
+      relevance: relevanceBand(j.score),
       verifyUrl: `https://indiankanoon.org/search/?formInput=${encodeURIComponent(j.citation)}`,
     }));
+  } else {
+    judgmentNote =
+      "The retrieval engine did not respond for judicial decisions, so no precedent could be matched.";
   }
 
   // --- Cross-statute graph -------------------------------------------------
@@ -428,9 +765,26 @@ export async function analyse(rawInput) {
   // --- Forms ---------------------------------------------------------------
   // A pro se person needs to know what paper to file, not just which section
   // applies, so the actual applications are surfaced alongside the plan.
-  const forms = kb.forms_for_category(primaryId);
-  const crossForms = resolved
-    .slice(1)
+  const actionPlanSelection = actionPlanKeyFor(detectedIssues, researchCategories, primaryId);
+  const canShowActionPlan = detectedIssues.length > 0 || provisions.length > 0;
+  const selectedPlanCategory = kb.category_by_id(actionPlanSelection.key);
+  let actionPlanNote = null;
+  if (!canShowActionPlan) {
+    actionPlanNote =
+      "No fact-specific action steps are shown because the narrative did not support a candidate issue or a relevant provision. Your selected category is kept as context, but it is not enough to choose a safe plan. Add what was done, by whom, and when.";
+  } else if (actionPlanSelection.kind !== "issue" && detectedIssues.length) {
+    actionPlanNote = `The corpus has no issue-specific action template for ${detectedIssues
+      .map((issue) => issue.label)
+      .join(", ")}. The steps shown come from the closest supported category${
+      selectedPlanCategory ? ` (${selectedPlanCategory.label})` : ""
+    } and should be checked against your facts.`;
+  }
+  const formCategoryId = selectedPlanCategory
+    ? actionPlanSelection.key
+    : researchCategories[0]?.id || primaryId;
+  const forms = kb.forms_for_category(formCategoryId);
+  const crossForms = researchCategories
+    .filter((r) => r.id !== formCategoryId)
     .flatMap((r) => kb.forms_for_category(r.id).map((f) => ({ ...f, forIssue: r.record.label })));
 
   // --- Hidden facts --------------------------------------------------------
@@ -440,7 +794,7 @@ export async function analyse(rawInput) {
   });
 
   // --- Action plan ---------------------------------------------------------
-  const primaryTemplate = kb.action_template(primaryId) || [];
+  const primaryTemplate = canShowActionPlan ? kb.action_template(actionPlanSelection.key) || [] : [];
   const actionPlan = primaryTemplate.map((step) => {
     const provRefs = (step.authorityRefs || [])
       .map((id) => kb.provision_by_id(id))
@@ -487,6 +841,43 @@ export async function analyse(rawInput) {
   const followUps = resolved.flatMap((r) =>
     (kb.follow_ups()[r.id] || []).map((q) => ({ question: q, forIssue: r.record.label })),
   );
+  const seenQuestions = new Set(followUps.map((f) => f.question));
+  for (const issue of detectedIssues) {
+    if (!issue.clarifyingQuestion || seenQuestions.has(issue.clarifyingQuestion)) continue;
+    seenQuestions.add(issue.clarifyingQuestion);
+    followUps.push({
+      question: issue.clarifyingQuestion,
+      forIssue: `${issue.label} (tentative)`,
+    });
+  }
+
+  const selectedMismatch =
+    detectedIssues.length &&
+    !detectedIssues.some((i) => (i.categoryIds || []).includes(primaryId))
+      ? `The category you selected (${primary.label}) does not directly match the candidate issues found in your narrative (${detectedIssues
+          .map((i) => i.label)
+          .join(", ")}). Your selection has been kept; retrieval also uses the narrative itself.`
+      : null;
+
+  const retrievalCoverage = buildRetrievalCoverage({
+    provisions,
+    judgments,
+    detectedIssues,
+    retrievalNote,
+    judgmentNote,
+    applicabilityInfo,
+    selectedMismatch,
+    contextWarning: titleCaveat,
+  });
+  const retrievalWarning = retrievalCoverage.warning || null;
+  const issueDetectionConfidence = detectedIssues.length
+    ? {
+        value: Math.max(...detectedIssues.map((i) => i.confidence)),
+        method:
+          "Heuristic cue matching over the narrative. The score is not calibrated and is not a legal determination.",
+        calibrated: false,
+      }
+    : null;
 
   const gaps = [];
   if (!timeline.events.length) {
@@ -506,6 +897,12 @@ export async function analyse(rawInput) {
   if (!provisions.length) {
     gaps.push("No provision in the bundled corpus could be matched to this narrative.");
   }
+  for (const issue of detectedIssues) {
+    if (issue.corpusSupport?.note) gaps.push(issue.corpusSupport.note);
+  }
+  if (selectedMismatch) gaps.push(selectedMismatch);
+  if (titleCaveat) gaps.push(titleCaveat);
+  if (applicabilityInfo.corpusCoverageGap) gaps.push(applicabilityInfo.corpusCoverageGap);
 
   // --- Optional live model pass -------------------------------------------
   // The deterministic result above is already complete. The model may only
@@ -518,7 +915,7 @@ export async function analyse(rawInput) {
     reliability: buildReliability({
       facts, timeline, provisions, judgments, evidence, retrievalNote, language,
     }),
-    engine: "hybrid retrieval - sparse TF-IDF for exact statutory wording, plus a 384-dimension multilingual embedding model for meaning, over a curated corpus",
+    engine: retrievalEngineLabel(retrievalMode),
   };
 
   let ai = { ok: false, mode: "deterministic", reason: "not_attempted" };
@@ -587,6 +984,12 @@ export async function analyse(rawInput) {
       emergency: r.record.emergency,
       defaultProvisionIds: r.record.defaultProvisionIds,
     })),
+    detectedIssues,
+    issueDetectionConfidence,
+    retrievalTerms: issueRetrievalTerms,
+    retrievalMode,
+    retrievalCoverage,
+    retrievalWarning,
     facts: facts.facts,
     hiddenFacts,
     stats: { sentences: facts.sentenceCount, words: facts.wordCount },
@@ -599,10 +1002,12 @@ export async function analyse(rawInput) {
     forms,
     crossForms,
     actionPlan,
+    actionPlanNote,
+    actionPlanSourceId: canShowActionPlan ? actionPlanSelection.key : null,
     crossStatute,
     followUps,
     applicability: applicabilityInfo,
-    referrals: referralsFor(resolved, emergency),
+    referrals: referralsFor(researchCategories, emergency),
     uncertainty,
     retrievalNote,
     disclaimer: kb.disclaimer(),
