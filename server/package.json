@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node --test ../scripts/test_extract.mjs"
+    "test": "node --test ../scripts/test_extract.mjs ../scripts/test_issue_detection.mjs ../scripts/test_lawyers.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
