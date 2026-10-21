@@ -409,7 +409,9 @@ function Overview({ data, meta, onOpenTab }) {
                 ))}
               </ol>
             ) : (
-              <p className="brief-empty">No action plan is available for this issue type.</p>
+              <p className="brief-empty">
+                {data.actionPlanNote || "No action plan is available for this issue type."}
+              </p>
             )}
             <button className="brief-link" type="button" onClick={() => onOpenTab("plan")}>
               Open full action plan <Icon name="arrow" size={13} />
@@ -559,6 +561,56 @@ function Overview({ data, meta, onOpenTab }) {
                   </div>
                 ))}
               </Panel>
+
+              {data.detectedIssues?.length ? (
+                <Panel
+                  title="Possible legal issues identified from your description"
+                  icon="layers"
+                  sub="Tentative candidates only. Nothing here is a legal classification or finding."
+                >
+                  {data.detectedIssues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      style={{
+                        padding: "12px 0",
+                        borderBottom: "1px solid var(--ivory-200)",
+                      }}
+                    >
+                      <p style={{ margin: 0, fontWeight: 600, color: "var(--navy-800)", fontSize: "0.9rem" }}>
+                        {issue.label}{" "}
+                        <Tag tone="moderate">tentative</Tag>
+                      </p>
+                      <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "var(--ink-soft)" }}>
+                        {issue.reason}
+                      </p>
+                      <p style={{ margin: "3px 0 0", fontSize: "0.77rem", color: "var(--ink-faint)" }}>
+                        {issue.corpusSupport?.status === "direct"
+                          ? "Relevant material is available in the bundled corpus."
+                          : issue.corpusSupport?.status === "related-only"
+                            ? "Only related material is available; the specific provision is not in the bundled corpus."
+                            : "No relevant material was found in the bundled corpus."}
+                      </p>
+                      {issue.corpusSupport?.note ? (
+                        <p style={{ margin: "4px 0 0", fontSize: "0.77rem", color: "var(--clay-600)" }}>
+                          {issue.corpusSupport.note}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                  {data.issueDetectionConfidence ? (
+                    <p style={{ margin: "10px 0 0", fontSize: "0.75rem", color: "var(--ink-faint)" }}>
+                      Heuristic confidence {Math.round(data.issueDetectionConfidence.value * 100)}%.{" "}
+                      {data.issueDetectionConfidence.method}
+                    </p>
+                  ) : null}
+                </Panel>
+              ) : null}
+
+              {data.retrievalWarning ? (
+                <Notice tone="warn" title="Retrieval coverage">
+                  <p>{data.retrievalWarning}</p>
+                </Notice>
+              ) : null}
             </div>
 
             <div>
@@ -1200,15 +1252,29 @@ function LegalResearch({ data, meta, group, onGroupChange, act, onActChange }) {
       ) : null}
 
       <Notice tone="info" title="How these were matched">
-        <p>
-          Two retrievers run over the same bundled corpus and their scores are blended. The first is
-          sparse TF-IDF, which is exact about statutory wording. The second is a 384-dimension
-          multilingual sentence-embedding model, which scores meaning — so a narrative that never uses
-          the word &ldquo;cruelty&rdquo; can still reach the section about cruelty. Neither reads your case and
-          decides what applies; both are matching over a fixed corpus. A weak match is labelled weak,
-          and a provision central to the issue type is marked as such even if the wording barely
-          overlaps.
-        </p>
+        {data.retrievalMode === "unavailable" ? (
+          <p>
+            No provision matching was performed because the retrieval engine did not respond. No
+            section has been substituted from outside the verified corpus.
+          </p>
+        ) : data.retrievalMode === "hybrid" || data.retrievalMode === "dense" ? (
+          <p>
+            Two retrievers run over the same bundled corpus and their scores are blended. The first is
+            sparse TF-IDF, which is exact about statutory wording. The second is a multilingual
+            sentence-embedding model, which scores meaning �?" so a narrative that never uses the word
+            &ldquo;cruelty&rdquo; can still reach the section about cruelty. Neither reads your case and decides
+            what applies; both are matching over a fixed corpus. A weak match is labelled weak, and a
+            provision central to the issue type is marked as such even if the wording barely overlaps.
+          </p>
+        ) : (
+          <p>
+            A sparse TF-IDF retriever scored these results against the bundled corpus. It is exact about
+            statutory wording but does not understand synonyms. The dense sentence-embedding model was
+            not available for this request, so meaning-based matching was not used. Nothing here reads
+            your case and decides what applies. A weak match is labelled weak, and a provision central
+            to the issue type is marked as such even if the wording barely overlaps.
+          </p>
+        )}
       </Notice>
 
       <div className="research-tabs" role="tablist" aria-label="Provision match strength">
@@ -1517,6 +1583,11 @@ function ActionPlan({ data, done, onToggle, stage, onStageChange, stepKey, onSte
 
   const urgent = data.referrals.filter((r) => ["police-112", "cyber-1930", "childline"].includes(r.id));
 
+  const lawyerParams = new URLSearchParams();
+  if (data.input?.category) lawyerParams.set("category", data.input.category);
+  if (data.input?.location) lawyerParams.set("city", data.input.location);
+  const lawyerHref = `#lawyers${lawyerParams.toString() ? `?${lawyerParams.toString()}` : ""}`;
+
   function selectStage(index) {
     onStageChange(index);
     onStepSelect(stages[index]?.steps[0]?.title || null);
@@ -1632,11 +1703,31 @@ function ActionPlan({ data, done, onToggle, stage, onStageChange, stepKey, onSte
               </div>
             </>
           ) : (
-            <Empty title="No action plan for this issue type yet">
-              Choose a category at intake and a plan will be produced from the corpus.
+            <Empty title="No fact-specific action plan is available">
+              {data.actionPlanNote ||
+                "Choose a category at intake and a plan will be produced from the corpus."}
             </Empty>
           )}
         </Panel>
+
+        {data.actionPlanNote && data.actionPlan.length ? (
+          <Notice tone="warn" title="Action-plan limitation">
+            <p>{data.actionPlanNote}</p>
+          </Notice>
+        ) : null}
+
+        <section className="law-cta" aria-labelledby="law-cta-title">
+          <div>
+            <h3 id="law-cta-title">Need professional legal assistance?</h3>
+            <p>
+              Not every matter needs paid representation. If you want to speak to a lawyer, you can
+              search using this case type and location, and compare consultation fees and modes.
+            </p>
+          </div>
+          <a className="btn btn--brass btn--sm" href={lawyerHref}>
+            Find a lawyer <Icon name="arrow" size={13} />
+          </a>
+        </section>
 
         {data.crossStatute?.length ? (
           <details className="plan-extra">
