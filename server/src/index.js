@@ -117,7 +117,7 @@ app.get("/api/health", async (_req, res) => {
 
   res.json({
     ok: true,
-    service: "nyayapath-api",
+    service: "JollyLLM-api",
     version: "1.1.1",
     engine,
     llm: {
@@ -404,6 +404,7 @@ app.post("/api/intake/chat", async (req, res, next) => {
       readinessScore: 50,
       evidenceChecklist: ["Original receipt or invoice", "Written correspondence"],
       readyForAnalysis: false,
+      llm: { used: false, reason: "agent_unavailable" },
     });
   } catch (err) {
     next(err);
@@ -500,6 +501,7 @@ app.post("/api/cases/:caseId/messages", async (req, res, next) => {
       timeline: timelineRepo.list(caseObj.id),
       readinessScore: advocateResult?.readinessScore || 70,
       readyForAnalysis: advocateResult?.readyForAnalysis !== undefined ? advocateResult.readyForAnalysis : true,
+      llm: advocateResult?.llm || { used: false, reason: "agent_unavailable" },
       nextIntakeStep: {
         question: assistantContent,
         status: "in_progress",
@@ -986,7 +988,7 @@ app.use((err, req, res, _next) => {
   return res.status(500).json({
     error: "internal_error",
     detail:
-      "The request could not be completed. This is a bug in the NyayaPath prototype, not a problem with your case.",
+      "The request could not be completed. This is a bug in the JollyLLM prototype, not a problem with your case.",
     hint: "Retry. If it keeps failing, restart the API service.",
   });
 });
@@ -996,7 +998,7 @@ app.use((err, req, res, _next) => {
 // ---------------------------------------------------------------------------
 
 const server = app.listen(PORT, () => {
-  console.log(`\n  NyayaPath API listening on http://localhost:${PORT}`);
+  console.log(`\n  JollyLLM API listening on http://localhost:${PORT}`);
   console.log(`  Corpus: ${kb.provisions().length} provisions, ${kb.judgments().length} judgments`);
   console.log(`  Language model: ${llm.isEnabled() ? llm.describe().model : "not configured (deterministic mode)"}\n`);
   // Warm the retrieval engine so the first user request is not the slow one.

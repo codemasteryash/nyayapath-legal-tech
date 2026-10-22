@@ -116,7 +116,7 @@ function TopBar({ route, go, health, hasCase, onReset }) {
               fontSize: "1.05rem",
               color: "var(--black)",
               lineHeight: 1.1,
-            }}>NyayaPath</span>
+            }}>JollyLLM</span>
             <span style={{
               fontFamily: "var(--mono)",
               fontSize: "0.52rem",
@@ -513,7 +513,7 @@ function Workspace({ data, form, meta, samples, go, onReset, onDelete, onToast }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `nyayapath-${(data.summary.headline || "case").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.txt`;
+    a.download = `JollyLLM-${(data.summary.headline || "case").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     onToast("Dossier downloaded");
@@ -966,7 +966,7 @@ export default function App() {
     return (
       <>
         <TopBar route={route} go={go} health={health} hasCase={false} onReset={reset} />
-        <Loading label="Starting NyayaPath…" />
+        <Loading label="Starting JollyLLM…" />
       </>
     );
   }
@@ -977,7 +977,7 @@ export default function App() {
         <TopBar route={route} go={go} health={null} hasCase={false} onReset={reset} />
         <main className="section">
           <div className="shell shell--narrow">
-            <Notice tone="warn" title="The NyayaPath service is not reachable">
+            <Notice tone="warn" title="The JollyLLM service is not reachable">
               <p>{bootError.message}</p>
               <p style={{ marginTop: 10 }}>
                 Start it with <code>npm start</code> in the <code>server</code> folder, then reload

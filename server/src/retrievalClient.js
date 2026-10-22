@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const ENGINE = path.join(REPO_ROOT, "retrieval", "engine.py");
 
-const PYTHON = process.env.NYAYAPATH_PYTHON || findPython();
+const PYTHON = process.env.JollyLLM_PYTHON || findPython();
 
 function findPython() {
   const candidates = ["python", "python3", "py"];
@@ -69,7 +69,7 @@ function spawnEngine() {
 
   proc.stderr.setEncoding("utf8");
   proc.stderr.on("data", (d) => {
-    process.env.NYAYAPATH_VERBOSE && console.error("[retrieval]", d.trim());
+    process.env.JollyLLM_VERBOSE && console.error("[retrieval]", d.trim());
   });
 
   proc.on("error", (err) => {

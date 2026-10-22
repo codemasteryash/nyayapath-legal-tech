@@ -1,5 +1,5 @@
 /**
- * NyayaPath Case State & Persistence Layer
+ * JollyLLM Case State & Persistence Layer
  *
  * Utilizes Node 24 native `node:sqlite` (DatabaseSync) for robust, ACID-compliant,
  * zero-dependency relational persistence.
@@ -29,7 +29,7 @@ if (!existsSync(DATA_DIR)) {
   mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const DB_PATH = process.env.NYAYAPATH_DB_PATH || path.join(DATA_DIR, "nyayapath.db");
+const DB_PATH = process.env.JollyLLM_DB_PATH || path.join(DATA_DIR, "JollyLLM.db");
 
 let dbInstance = null;
 

@@ -17,6 +17,8 @@ import json
 import os
 import re
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -42,6 +44,62 @@ def load_env() -> Dict[str, str]:
     return env_vars
 
 ENV = load_env()
+
+# ---------------------------------------------------------------------------
+# LLM configuration (same environment contract as server/src/llm.js)
+# ---------------------------------------------------------------------------
+LLM_PROVIDER_DEFAULTS: Dict[str, Tuple[Optional[str], Optional[str], str]] = {
+    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile", "Groq"),
+    "openai": ("https://api.openai.com/v1", "gpt-4o-mini", "OpenAI"),
+}
+
+
+def _env_first(*names: str) -> str:
+    for name in names:
+        value = ENV.get(name)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def llm_config() -> Optional[Dict[str, str]]:
+    """Resolve the configured OpenAI-compatible endpoint without exposing the key."""
+    toggle = _env_first("LLM_ENABLED", "JollyLLM_LLM_ENABLED").lower()
+    if toggle in ("false", "0"):
+        return None
+
+    provider_key = (_env_first("LLM_PROVIDER", "JollyLLM_LLM_PROVIDER") or "groq").lower()
+    default_base, default_model, provider_label = LLM_PROVIDER_DEFAULTS.get(
+        provider_key, (None, None, "OpenAI-compatible endpoint")
+    )
+
+    api_key = _env_first(
+        "LLM_API_KEY",
+        "GROQ_API_KEY",
+        "OPENAI_API_KEY",
+        "JollyLLM_LLM_API_KEY",
+    )
+    base_url = (_env_first("LLM_BASE_URL", "JollyLLM_LLM_BASE_URL") or default_base or "").rstrip("/")
+    model = _env_first("LLM_MODEL", "JollyLLM_LLM_MODEL") or default_model or ""
+
+    if not (api_key and base_url and model):
+        return None
+
+    return {
+        "api_key": api_key,
+        "base_url": base_url,
+        "model": model,
+        "provider": provider_label,
+    }
+
+
+def _llm_timeout_seconds() -> float:
+    try:
+        configured = int(_env_first("LLM_TIMEOUT_MS") or "20000")
+    except ValueError:
+        configured = 20000
+    return max(3.0, min(configured / 1000.0, 30.0))
+
 
 # ---------------------------------------------------------------------------
 # Guardrail Tier 1: Emergency & Imminent Safety Triage
@@ -106,7 +164,7 @@ def check_adversarial_guardrail(text: str) -> Optional[str]:
                 "⚖️ **Statutory Prohibition:**\n"
                 "- Fabricating evidence, forging receipts, manufacturing signatures, or presenting false affidavits constitutes serious criminal offences under **Bharatiya Nyaya Sanhita, 2023 (Section 227 - Fabricating false evidence; Section 336 - Forgery; Section 340 - Using forged document as genuine)** and former IPC Sections 192, 193, 465, and 471.\n"
                 "- Presenting fabricated records before any judicial forum or Consumer Commission invites summary dismissal of proceedings, immediate prosecution for perjury under **Section 379 BNSS**, and heavy exemplary costs.\n\n"
-                "NyayaPath Legal Enclave strictly facilitates lawful rights protection, genuine evidence gathering, and legitimate litigation readiness. Please share only truthful, contemporaneous facts and lawful claims."
+                "JollyLLM Legal Enclave strictly facilitates lawful rights protection, genuine evidence gathering, and legitimate litigation readiness. Please share only truthful, contemporaneous facts and lawful claims."
             )
     return None
 
@@ -221,24 +279,31 @@ def retrieve_rag_context(query: str, category: str, top_k: int = 4) -> Dict[str,
     return {"provisions": provisions, "judgments": judgments}
 
 # ---------------------------------------------------------------------------
-# Groq LLM Invocation with Strict Guardrails
+# OpenAI-compatible LLM Invocation with Strict Guardrails
 # ---------------------------------------------------------------------------
-def call_groq_senior_advocate(conversation: List[Dict[str, str]], rag_context: Dict[str, Any], category: str) -> Optional[str]:
-    api_key = ENV.get("LLM_API_KEY") or ENV.get("GROQ_API_KEY")
-    if not api_key:
-        return None
+def call_senior_advocate(
+    conversation: List[Dict[str, str]],
+    rag_context: Dict[str, Any],
+    category: str,
+) -> Tuple[Optional[str], Dict[str, Any]]:
+    cfg = llm_config()
+    if not cfg:
+        return None, {"used": False, "reason": "not_configured"}
+
+    status: Dict[str, Any] = {
+        "used": False,
+        "provider": cfg["provider"],
+        "model": cfg["model"],
+    }
 
     try:
-        from groq import Groq
-        client = Groq(api_key=api_key)
-        
         prov_context_str = ""
         if rag_context.get("provisions"):
             prov_context_str = "Verified Indian Statutory Provisions retrieved for this case:\n" + "\n".join(
                 f"- {p['act']} {p['section']}: {p['heading']} ({p['summary']})"
                 for p in rag_context["provisions"]
             )
-        
+
         judg_context_str = ""
         if rag_context.get("judgments"):
             judg_context_str = "\nRelevant Landmark Precedents:\n" + "\n".join(
@@ -280,25 +345,55 @@ CRITICAL RULES OF ADVOCACY & ETHICAL GUARDRAILS:
             if content.strip():
                 messages.append({"role": role, "content": content})
 
-        model = ENV.get("LLM_MODEL") or "openai/gpt-oss-120b"
-        if "llama-3.3" in model:
-            model = "openai/gpt-oss-120b"
+        payload = json.dumps(
+            {
+                "model": cfg["model"],
+                "messages": messages,
+                "temperature": 0.3,
+                "max_tokens": 650,
+            }
+        ).encode("utf-8")
 
-        completion = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0.3,
-            max_tokens=650,
+        request = urllib.request.Request(
+            f'{cfg["base_url"]}/chat/completions',
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f'Bearer {cfg["api_key"]}',
+                "User-Agent": "JollyLLM/1.0",
+            },
+            method="POST",
         )
 
-        reply = completion.choices[0].message.content
-        if reply and len(reply.strip()) > 30:
-            return reply.strip()
+        with urllib.request.urlopen(request, timeout=_llm_timeout_seconds()) as response:
+            body = response.read().decode("utf-8", errors="replace")
+
+        data = json.loads(body)
+        reply = data["choices"][0]["message"]["content"]
+        if isinstance(reply, str) and len(reply.strip()) > 30:
+            status["used"] = True
+            return reply.strip(), status
+
+        status["reason"] = "empty_response"
+        sys.stderr.write("[legal_agent] LLM returned an empty or unusable completion\n")
+        sys.stderr.flush()
+    except urllib.error.HTTPError as exc:
+        detail = ""
+        try:
+            detail = exc.read().decode("utf-8", errors="replace")[:300]
+        except Exception:
+            pass
+        status["reason"] = f"http_{exc.code}"
+        sys.stderr.write(f"[legal_agent] LLM HTTP error {exc.code}: {detail}\n")
+        sys.stderr.flush()
     except Exception as exc:
-        sys.stderr.write(f"[legal_agent] Groq call error: {exc}\n")
+        status["reason"] = "provider_error"
+        sys.stderr.write(
+            f"[legal_agent] LLM call error: {type(exc).__name__}: {str(exc)[:300]}\n"
+        )
         sys.stderr.flush()
 
-    return None
+    return None, status
 
 # ---------------------------------------------------------------------------
 # High-Caliber Deterministic Synthesis Fallback
@@ -380,7 +475,7 @@ def synthesize_fallback_opinion(latest_text: str, category: str, rag_context: Di
 # ---------------------------------------------------------------------------
 STATUTORY_DISCLAIMER_FOOTER = (
     "\n\n---\n"
-    "⚖️ *NyayaPath Procedural Integrity Notice (Advocates Act, 1961 & BCI Rules):* "
+    "⚖️ *JollyLLM Procedural Integrity Notice (Advocates Act, 1961 & BCI Rules):* "
     "This guidance is provided for pro se case preparation and statutory rights analysis. "
     "It does not create a formal advocate-client vakalatnama relationship. "
     "Pleadings should be finalized with an enrolled advocate or District Legal Services Authority (DLSA) panel counsel before judicial submission."
@@ -416,6 +511,7 @@ def handle_advocate_turn(payload: Dict[str, Any]) -> Dict[str, Any]:
             "evidenceChecklist": [],
             "guardrailTriggered": "adversarial_refusal",
             "readyForAnalysis": False,
+            "llm": {"used": False, "reason": "guardrail"},
         }
 
     # -----------------------------------------------------------------------
@@ -445,8 +541,8 @@ def handle_advocate_turn(payload: Dict[str, Any]) -> Dict[str, Any]:
     if new_text and (not conv_history or conv_history[-1].get("text") != new_text):
         conv_history.append({"sender": "client", "text": new_text})
 
-    # 4. Invoke Senior Advocate via Groq or fallback synthesis
-    counsel_reply = call_groq_senior_advocate(conv_history, rag_context, effective_category)
+    # 4. Invoke Senior Advocate via the configured LLM or fallback synthesis
+    counsel_reply, llm_status = call_senior_advocate(conv_history, rag_context, effective_category)
     if not counsel_reply:
         counsel_reply = synthesize_fallback_opinion(new_text or full_narrative, effective_category, rag_context, conv_history)
 
@@ -494,6 +590,7 @@ def handle_advocate_turn(payload: Dict[str, Any]) -> Dict[str, Any]:
             "provisionsCount": len(rag_context.get("provisions", [])),
             "judgmentsCount": len(rag_context.get("judgments", [])),
         },
+        "llm": llm_status,
     }
 
 if __name__ == "__main__":
@@ -512,3 +609,4 @@ if __name__ == "__main__":
     sys.stdout.buffer.write(res["reply"].encode("utf-8"))
     print("\n\nCategory:", res["category"])
     print("Guardrail:", res.get("guardrailTriggered"))
+    print("LLM:", json.dumps(res.get("llm", {})))

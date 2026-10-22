@@ -201,7 +201,7 @@ export default function NewWorkspaceInterview({
       name: "Senior Advocate Deshmukh",
       time: "Initial Intake",
       text:
-        "Welcome to NyayaPath Legal Enclave. I am Senior Advocate Deshmukh.\n\nTo properly register and prepare your case workspace, I need to interrogate the factual foundation of your dispute. Please describe what happened in your own words, and upload any notices, agreements, bank statements, or WhatsApp evidence.\n\nI will analyze applicable Indian statutes (including BNS/BNSS criminal transitions), identify missing legal proofs, ask clarifying questions, and configure your case workspace.",
+        "Welcome to JollyLLM Legal Enclave. I am Senior Advocate Deshmukh.\n\nTo properly register and prepare your case workspace, I need to interrogate the factual foundation of your dispute. Please describe what happened in your own words, and upload any notices, agreements, bank statements, or WhatsApp evidence.\n\nI will analyze applicable Indian statutes (including BNS/BNSS criminal transitions), identify missing legal proofs, ask clarifying questions, and configure your case workspace.",
     },
   ]);
 
