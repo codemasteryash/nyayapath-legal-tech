@@ -1,4 +1,4 @@
-# NyayaPath (न्यायपथ)
+# JollyLLM (न्यायपथ)
 ### AI-Driven Legal Advocate & Pro Se Strategy Engine
 
 > **"Know Your Rights in Ten Minutes"**  
@@ -35,13 +35,13 @@ Across India, millions of citizens encounter legal disputes, domestic harassment
 - **Flawed Generic AI Chatbots:** Standard LLM chatbots deliver generic legal definitions, hallucinate non-existent sections and deadlines, invent case law, and cannot safely correlate personal facts with judicial precedent.
 - **The July 1, 2024 Transition Confusion:** The replacement of the Indian Penal Code (IPC), Code of Criminal Procedure (CrPC), and Indian Evidence Act (IEA) with the Bharatiya Nyaya Sanhita (BNS), Bharatiya Nagarik Suraksha Sanhita (BNSS), and Bharatiya Sakshya Adhiniyam (BSA) created widespread confusion on which law applies based on incident timelines.
 
-**NyayaPath** resolves these obstacles by converting unstructured case narratives into an actionable, cross-statutory defense blueprint within **ten minutes**—strictly anchored to verified law and historical precedents without hallucination.
+**JollyLLM** resolves these obstacles by converting unstructured case narratives into an actionable, cross-statutory defense blueprint within **ten minutes**—strictly anchored to verified law and historical precedents without hallucination.
 
 ---
 
 ## 💡 Proposed Solution & Core Philosophy
 
-NyayaPath operates as an intelligent legal companion and *pro se* defense architect. It accepts narratives in **English, Hindi (Devanagari), or Hinglish (Romanised Hindi)** and uploaded evidentiary PDFs.
+JollyLLM operates as an intelligent legal companion and *pro se* defense architect. It accepts narratives in **English, Hindi (Devanagari), or Hinglish (Romanised Hindi)** and uploaded evidentiary PDFs.
 
 ```
  Case Narrative / PDF Upload
@@ -88,7 +88,7 @@ NyayaPath operates as an intelligent legal companion and *pro se* defense archit
 
 ## 🏛 System Architecture
 
-NyayaPath consists of three cohesive tiers communicating via high-speed, local protocols:
+JollyLLM consists of three cohesive tiers communicating via high-speed, local protocols:
 
 ```mermaid
 flowchart TB
@@ -193,7 +193,7 @@ sequenceDiagram
 
 Access to justice demands native language support:
 1. **Pure Hindi (Devanagari):** Analyzed with an n-gram window (unigram and adjacent word runs) normalized via Unicode NFKC.
-2. **Hinglish (Phonetic Romanised Hindi):** Litigants frequently express urgent crises using Roman characters for Hindi speech (e.g., *"pati ne mara aur ghar se nikal diya"*). NyayaPath features an embedded semantic mapping table converting phonetic terms:
+2. **Hinglish (Phonetic Romanised Hindi):** Litigants frequently express urgent crises using Roman characters for Hindi speech (e.g., *"pati ne mara aur ghar se nikal diya"*). JollyLLM features an embedded semantic mapping table converting phonetic terms:
    - `pati` / `poti` $\rightarrow$ पति (husband)
    - `saas` $\rightarrow$ सास (mother-in-law)
    - `peet` / `mara` $\rightarrow$ मारपीट (battery / physical violence)
@@ -206,7 +206,7 @@ Access to justice demands native language support:
 
 ## 🔍 Hybrid Retrieval & Precedent Search
 
-Legal vocabulary presents a dual challenge: exact statutory language requires keyword precision, while everyday vernacular requires conceptual semantic matching. NyayaPath implements **Hybrid Search**:
+Legal vocabulary presents a dual challenge: exact statutory language requires keyword precision, while everyday vernacular requires conceptual semantic matching. JollyLLM implements **Hybrid Search**:
 
 ### 1. Sparse Vector Space (TF-IDF)
 - Tokenizes legal provisions and case judgments.
@@ -227,7 +227,7 @@ $$\text{Score}_{\text{hybrid}} = \frac{w_{\text{sparse}} \cdot \widetilde{S}_{\t
 
 ## 🕸 Cross-Statute Interlinking Graph
 
-Self-represented citizens frequently do not know that one wrongful act triggers remedies across distinct legal codes. NyayaPath generates an **Interlinking Subgraph** that maps relations between provisions:
+Self-represented citizens frequently do not know that one wrongful act triggers remedies across distinct legal codes. JollyLLM generates an **Interlinking Subgraph** that maps relations between provisions:
 
 ```
         ┌────────────────────────────────┐
@@ -266,7 +266,7 @@ On **1 July 2024**, India enacted three new criminal enactments:
 - **Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023** (replaced the Code of Criminal Procedure, 1973)
 - **Bharatiya Sakshya Adhiniyam (BSA), 2023** (replaced the Indian Evidence Act, 1872)
 
-Under Article 20(1) of the Constitution of India, substantive criminal law cannot apply retrospectively. NyayaPath includes a temporal reasoning rule:
+Under Article 20(1) of the Constitution of India, substantive criminal law cannot apply retrospectively. JollyLLM includes a temporal reasoning rule:
 1. **Incident dated strictly BEFORE 1 July 2024:** The system flags that substantive offenses occurred prior to the transition date, alerting the litigant that IPC/CrPC governs the substantive offenses, while displaying current sections with cross-reference guidance.
 2. **Incident dated ON or AFTER 1 July 2024:** Confirms that the Bharatiya Nyaya Sanhita (BNS) and BNSS apply directly.
 3. **Undated / Ambiguous Narratives:** Warns the user of the critical importance of fixing dates to determine statutory applicability.
@@ -288,7 +288,7 @@ Under Article 20(1) of the Constitution of India, substantive criminal law canno
 ## 📁 Repository Structure
 
 ```
-nyayapath-legal-tech/
+JollyLLM-legal-tech/
 ├── data/
 │   └── knowledge/                      # Curated, authoritative legal corpus
 │       ├── actionplans.json            # Step-by-step procedural roadmaps & deadlines
@@ -342,7 +342,7 @@ nyayapath-legal-tech/
 
 ## 📚 Curated Legal Knowledge Base
 
-NyayaPath is bundled with comprehensive coverage of Indian central legislation:
+JollyLLM is bundled with comprehensive coverage of Indian central legislation:
 
 ### Covered Acts & Enactments
 - **BNS, 2023:** Bharatiya Nyaya Sanhita (Offenses against women, property, body, computer-assisted offenses, criminal intimidation).
@@ -554,10 +554,10 @@ python retrieval/workflow.py
 ## 🕊 Ethical Considerations, SDGs & Disclaimers
 
 ### Non-Lawyer Disclaimer
-NyayaPath is an **information and strategy engine**, not a licensed attorney. It does not provide legal representation, nor does using it establish an attorney-client relationship. All strategies, forms, and timelines are intended to empower self-represented citizens to understand their options and prepare their documents. Litigants facing criminal prosecution or complex civil litigation are urged to seek qualified counsel or visit their local Legal Services Authority (DLSA).
+JollyLLM is an **information and strategy engine**, not a licensed attorney. It does not provide legal representation, nor does using it establish an attorney-client relationship. All strategies, forms, and timelines are intended to empower self-represented citizens to understand their options and prepare their documents. Litigants facing criminal prosecution or complex civil litigation are urged to seek qualified counsel or visit their local Legal Services Authority (DLSA).
 
 ### Sustainable Development Goals (SDG) Alignment
-NyayaPath directly advances the United Nations Sustainable Development Goals:
+JollyLLM directly advances the United Nations Sustainable Development Goals:
 - **SDG 16 (Peace, Justice, and Strong Institutions):** Provides equal access to justice and legal empowerment for self-represented citizens.
 - **SDG 5 (Gender Equality):** Provides protective pathways and procedural roadmaps for survivors of domestic violence, workplace harassment, and dowry abuse.
 - **SDG 10 (Reduced Inequalities):** Lowers the financial and linguistic barriers to navigating the justice system.

@@ -1,9 +1,9 @@
 {
-  "name": "nyayapath-server",
+  "name": "JollyLLM-server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "NyayaPath backend API: case analysis, PDF extraction, legal-source retrieval, action plan generation",
+  "description": "JollyLLM backend API: case analysis, PDF extraction, legal-source retrieval, action plan generation",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

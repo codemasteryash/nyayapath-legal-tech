@@ -39,7 +39,7 @@ async function request(path, options = {}) {
       );
     }
     throw new ApiError(
-      "Could not reach the NyayaPath service. Check that the API is running on port 8787 and try again.",
+      "Could not reach the JollyLLM service. Check that the API is running on port 8787 and try again.",
       { code: "network" },
     );
   }

@@ -68,7 +68,7 @@ export function disclaimer() {
   return {
     headline: "Legal information, not legal advice.",
     body:
-      "NyayaPath organises publicly available law and produces a preliminary map of your problem. " +
+      "JollyLLM organises publicly available law and produces a preliminary map of your problem. " +
       "It is not a lawyer, it does not represent you, and nothing here is a conclusion about your case. " +
       "Every section, decision and deadline shown is traceable to a bundled source record, but " +
       "whether that law applies to your facts is something a qualified lawyer has to assess.",

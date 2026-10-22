@@ -49,19 +49,19 @@ function env(...names) {
 
 /** Resolve provider config once. Never returns the key. */
 export function config() {
-  const providerKey = (env("LLM_PROVIDER", "NYAYAPATH_LLM_PROVIDER") || "groq").toLowerCase();
+  const providerKey = (env("LLM_PROVIDER", "JollyLLM_LLM_PROVIDER") || "groq").toLowerCase();
   const provider = PROVIDERS[providerKey] || PROVIDERS.generic;
 
   const apiKey = env(
     "LLM_API_KEY",
     "GROQ_API_KEY",
     "OPENAI_API_KEY",
-    "NYAYAPATH_LLM_API_KEY",
+    "JollyLLM_LLM_API_KEY",
   );
-  const baseUrl = (env("LLM_BASE_URL", "NYAYAPATH_LLM_BASE_URL") || provider.baseUrl || "").replace(/\/+$/, "");
-  const model = env("LLM_MODEL", "NYAYAPATH_LLM_MODEL") || provider.defaultModel || "";
+  const baseUrl = (env("LLM_BASE_URL", "JollyLLM_LLM_BASE_URL") || provider.baseUrl || "").replace(/\/+$/, "");
+  const model = env("LLM_MODEL", "JollyLLM_LLM_MODEL") || provider.defaultModel || "";
 
-  const toggle = env("LLM_ENABLED", "NYAYAPATH_LLM_ENABLED");
+  const toggle = env("LLM_ENABLED", "JollyLLM_LLM_ENABLED");
   const explicitlyOff = toggle.toLowerCase() === "false" || toggle === "0";
 
   const missing = [];

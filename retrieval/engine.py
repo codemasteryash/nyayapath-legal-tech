@@ -1,5 +1,5 @@
 """
-NyayaPath retrieval engine
+JollyLLM retrieval engine
 ==========================
 
 A small, dependency-free lexical retrieval service over the curated legal corpus

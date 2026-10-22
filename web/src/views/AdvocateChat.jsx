@@ -37,7 +37,7 @@ export default function AdvocateChat({
     {
       sender: "assistant",
       content:
-        "Namaste. I am your **NyayaPath AI Legal Advocate** — your dedicated case-preparation co-counsel. Tell me what happened in your own words, and I will extract your facts, check applicable Indian statutes (including new Bharatiya Nyaya Sanhita transitions), identify missing evidence, and build your legal strategy.",
+        "Namaste. I am your **JollyLLM AI Legal Advocate** — your dedicated case-preparation co-counsel. Tell me what happened in your own words, and I will extract your facts, check applicable Indian statutes (including new Bharatiya Nyaya Sanhita transitions), identify missing evidence, and build your legal strategy.",
       time: "Just now",
     },
   ]);
@@ -84,7 +84,7 @@ export default function AdvocateChat({
             setMessages([
               {
                 sender: "assistant",
-                content: `Namaste. I am your NyayaPath AI Legal Advocate for workspace "${activeCase.title}". Tell me what happened in your own words, and I will extract your facts, check applicable Indian statutes (including BNS transitions), and prepare your legal roadmap.`,
+                content: `Namaste. I am your JollyLLM AI Legal Advocate for workspace "${activeCase.title}". Tell me what happened in your own words, and I will extract your facts, check applicable Indian statutes (including BNS transitions), and prepare your legal roadmap.`,
                 time: "Just now",
               },
             ]);
